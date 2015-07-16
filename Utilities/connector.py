@@ -4,7 +4,6 @@ import praw
 from requests import ConnectionError
 from praw.errors import OAuthInvalidGrant
 
-import configReader as cfgReader
 from loggingSetup import create_logger
 
 __author__ = 'Eliminioa'
@@ -18,7 +17,7 @@ class Connector(object):
                    'player': ('identity')
                    }
 
-    def __init__(self):
+    def __init__(self, config):
         """
         This provides a method of connecting to an account on reddit. It has
         two user classes, 'bot' and 'player' which indicate which scopes it
@@ -30,10 +29,9 @@ class Connector(object):
         # Defining instance variables
         #TODO Make access info lookup SQL
         self.log = create_logger(__name__)
-        self.cfg = cfgReader.ConfigReader()
-        self.access_infos = self.cfg._access_infos
+        self.cfg = config
         self.r = praw.Reddit(
-            user_agent=self.cfg._user_agent
+            user_agent=self.cfg["USER_AGENT"]
         )
 
         try:
@@ -42,13 +40,13 @@ class Connector(object):
             self.log.exception('Cannot connect to Reddit!')
             raise e
         self.log.debug('Connected to reddit with user agent %(ua)s' %
-                       {'ua': self.cfg._user_agent}
+                       {'ua': self.cfg["USER_AGENT"]}
                        )
 
         self.r.set_oauth_app_info(
-            client_id=self.cfg._client_id,
-            client_secret=self.cfg._client_secret,
-            redirect_uri=self.cfg._redirect_uri
+            client_id=self.cfg["CLIENT_ID"],
+            client_secret=self.cfg["CLIENT_SECRET"],
+            redirect_uri=self.cfg["REDIRECT_URI"]
         )
 
         # UNWRAPPING METHODS AND WRAPPING CUSTOM METHODS
@@ -77,7 +75,7 @@ class Connector(object):
                        {'account': self.account_info}
                        )
 
-        self.cfg._access_infos[self.r.get_me().name] = access_information
+        #self.cfg._access_infos[self.r.get_me().name] = access_information
 
     def get_OAuth_URL(self, user_class):
         user_class_scope = Connector.USER_SCOPES[user_class]
@@ -142,6 +140,3 @@ class Connector(object):
     @property
     def username(self):
         return self.account_info.name
-
-# finally, make the Connector object
-antenna = Connector()

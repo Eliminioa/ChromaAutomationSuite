@@ -1,7 +1,8 @@
 # Created by .ignore support plugin (hsz.mobi)
 
 ### BEGIN CUSTOM IGNORES
-/Config
+Config/*
+/Defunct
 /static
 /templates
 *.sql
