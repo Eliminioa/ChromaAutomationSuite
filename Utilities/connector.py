@@ -74,8 +74,7 @@ class Connector(object):
         self.log.debug('Logged into reddit with %(account)s' %
                        {'account': self.account_info}
                        )
-
-        #self.cfg._access_infos[self.r.get_me().name] = access_information
+        return access_information
 
     def get_OAuth_URL(self, user_class):
         user_class_scope = Connector.USER_SCOPES[user_class]
@@ -85,7 +84,7 @@ class Connector(object):
             scope=user_class_scope,
             refreshable=True
         )
-
+        print OAuth_URL
         return OAuth_URL
 
     def refresh_token(self):

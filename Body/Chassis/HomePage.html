@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <title>Starter Template for Bootstrap</title>
+        <!-- Bootstrap core CSS -->
+        <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <div class="navbar navbar-inverse navbar-fixed-top" role="navigation" data-pg-collapsed>
+            <div class="container" data-pg-collapsed>
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">Chroma Automation Suite</a>
+                </div>
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li class="active">
+</li>
+                        <li>
+                            <a href="/AboutPage">About</a>
+                        </li>
+                        <li>
+                            <a href="/ContactPage">Contact</a>
+                        </li>
+                    </ul>
+                    <form action="/sign-in" method="post" class="navbar-form navbar-right" role="form">
+                        <input type="submit" class="btn" value="Sign In With Reddit">
+                    </form>
+                </div>
+                <!--/.nav-collapse -->
+            </div>
+        </div>
+        <hr />
+        <div class="container">
+            <div class="starter-template">
+                <h1>Chroma Automation Suite</h1>
+                <p class="lead">Welcome to the new Chroma Automation Suite. Created and curated by /u/Eliminioa, the CAS strives to make Chroma a more efficient place by automating some tasks. Currently the Chroma Automation Suite is on version: {{ version }}</p>
+                <p class="lead">Please sign in with your Reddit account:</p>
+                <form action="/sign-in" method="post" class="navbar-form navbar-right" role="form">
+                    <input type="submit" class="btn" value="Sign In With Reddit">
+                </form>
+                <h2>Current Status: {{ status }}</h2>
+            </div>
+        </div>
+        <h2 align="center" style="display: block;">Welcome, {{ username }}. Chroma Automation Suite is {{ status }}</h2>
+        <hr style="display: block;">
+        <div class="container big-box">
+            <form role="form" id="messageForm" class="form-normal" action="/sendMessage">
+                <div class="col-md-4"> 
+                    <div class="row">
+                        <div class="form-group"> 
+                            <label class="control-label" for="subjectField">Subject</label>
+                            <div class="">
+                                <input type="text" class="form-control" id="subjectField" placeholder="Message Subject" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group"> 
+                            <label class="control-label" for="recipientsDropdown">Recipients</label>
+                            <div class="">
+                                <div class="btn-group offset-1" id="recipientsDropdown" data-pg-collapsed> 
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">    Action 
+                                        <span class="caret"></span>
+                                    </button>                                     
+                                    <ul class="dropdown-menu" role="menu"> 
+                                        <li>
+                                            <a href="#">Action</a>
+                                        </li>                                         
+                                        <li>
+                                            <a href="#">Another action</a>
+                                        </li>                                         
+                                        <li>
+                                            <a href="#">Something else here</a>
+                                        </li>
+                                        <li class="divider"></li>                                         
+                                        <li>
+                                            <a href="#">Separated link</a>
+                                        </li>
+                                    </ul>                                     
+                                </div>
+                            </div>
+                        </div>
+                    </div>                     
+                </div>
+                <div class="big-text-box-column col-md-8 col-xs-push-0">
+                    <div class="form-group" id="contentGroup" style="display: block;"> 
+                        <label class="control-label" for="contentField">Message content</label>                         
+                        <textarea class="form-control" id="contentField" rows="10" placeholder="Write the message to be sent here."></textarea>
+                    </div>
+                    <div class="well">{{ redditConversion }}</div>
+                </div>
+                <input type="submit" class="btn" value="Send Message">
+            </form>
+            <form action="/runMainLoop" name="InitForm" class="form-normal">
+                <input>
+            </form>
+        </div>
+    </body>
+</html>
