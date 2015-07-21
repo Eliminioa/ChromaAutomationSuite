@@ -1,7 +1,7 @@
-from contextlib import closing
+from os import path
 
 import sqlite3
-from flask import Flask, g, render_template, request, redirect
+from flask import Flask, g, render_template, request, redirect, session, url_for
 
 from Utilities import loggingSetup, connector
 from Mind import memory
@@ -27,10 +27,10 @@ def teardown_request(exception):
 
 def init_db():
     """Initializes the database."""
-    with closing(connect_db()) as db:
-        with CAS.open_resource('Config/subconscious.sql') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
+    db = connect_db()
+    with CAS.open_resource('Config/subconscious.sql') as f:
+        db.cursor().executescript(f.read())
+    db.commit()
 
 
 def connect_db():
@@ -48,7 +48,7 @@ def get_consciousness():
 # ROUTING METHODS
 @CAS.route('/')
 def home_page():
-    return render_template("HomePage.html")
+    return render_template("HomePage.html",groups = CAS.config['GROUPS'])
 
 
 @CAS.route('/AboutPage')
@@ -65,14 +65,28 @@ def contact_page():
 def sign_in():
     return redirect(ANTENNA.get_OAuth_URL('player'))
 
+@CAS.route('/sign-out', methods=['GET','POST'])
+def sign_out():
+    session["logged_in"] = False
+    return redirect('/')
+
 
 @CAS.route('/authorize_callback')
 def authorize_user():
+    #get authorization
     OAuth_code = request.args.get('code')
     access_info = ANTENNA.connect_to_reddit(OAuth_code)
-    username = ANTENNA.account_info
-    g.db
-    return render_template("HomePage.html")
+
+    #establish player in DB
+    username = ANTENNA.account_info.name
+    memory.handle_player_memory(g.db, username, access_info=access_info, usertype='Mod')
+
+    #handle session info
+    session["username"] = username
+    session["usertype"] = 'Mod'
+    session["logged_in"] = True
+
+    return redirect('/')
 
 if __name__ == '__main__':
     CAS.run(host='127.0.0.1')

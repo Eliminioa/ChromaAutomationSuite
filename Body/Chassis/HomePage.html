@@ -25,22 +25,26 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#">Chroma Automation Suite</a>
+                    <a class="navbar-brand" href="\">Chroma Automation Suite</a>
                 </div>
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav">
                         <li class="active">
-</li>
-                        <li>
                             <a href="/AboutPage">About</a>
                         </li>
                         <li>
                             <a href="/ContactPage">Contact</a>
                         </li>
                     </ul>
+                    {% if not session.logged_in %}
                     <form action="/sign-in" method="post" class="navbar-form navbar-right" role="form">
                         <input type="submit" class="btn" value="Sign In With Reddit">
                     </form>
+                    {% else %}
+                    <form action="/sign-out" method="post" class="navbar-form navbar-right" role="form">
+                        <input type="submit" class="btn" value="Sign Out">
+                    </form>
+                    {% endif %}
                 </div>
                 <!--/.nav-collapse -->
             </div>
@@ -50,14 +54,16 @@
             <div class="starter-template">
                 <h1>Chroma Automation Suite</h1>
                 <p class="lead">Welcome to the new Chroma Automation Suite. Created and curated by /u/Eliminioa, the CAS strives to make Chroma a more efficient place by automating some tasks. Currently the Chroma Automation Suite is on version: {{ version }}</p>
+                {% if not session.logged_in %}
                 <p class="lead">Please sign in with your Reddit account:</p>
                 <form action="/sign-in" method="post" class="navbar-form navbar-right" role="form">
                     <input type="submit" class="btn" value="Sign In With Reddit">
                 </form>
-                <h2>Current Status: {{ status }}</h2>
+                {%  endif %}
             </div>
         </div>
-        <h2 align="center" style="display: block;">Welcome, {{ username }}. Chroma Automation Suite is {{ status }}</h2>
+        {% if session.logged_in %}
+        <h2 align="center" style="display: block;">Welcome, {{ session.username }}. Chroma Automation Suite is {{ session.status }}</h2>
         <hr style="display: block;">
         <div class="container big-box">
             <form role="form" id="messageForm" class="form-normal" action="/sendMessage">
@@ -78,20 +84,12 @@
                                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">    Action 
                                         <span class="caret"></span>
                                     </button>                                     
-                                    <ul class="dropdown-menu" role="menu"> 
+                                    <ul class="dropdown-menu" role="menu">
+                                        {% for group in groups %}
                                         <li>
-                                            <a href="#">Action</a>
-                                        </li>                                         
-                                        <li>
-                                            <a href="#">Another action</a>
-                                        </li>                                         
-                                        <li>
-                                            <a href="#">Something else here</a>
+                                            <a href="#">{{ group }}</a>
                                         </li>
-                                        <li class="divider"></li>                                         
-                                        <li>
-                                            <a href="#">Separated link</a>
-                                        </li>
+                                        {% endfor %}
                                     </ul>                                     
                                 </div>
                             </div>
@@ -111,5 +109,6 @@
                 <input>
             </form>
         </div>
+        {% endif %}
     </body>
 </html>

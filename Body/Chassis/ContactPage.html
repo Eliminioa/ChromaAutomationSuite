@@ -25,7 +25,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#">Chroma Automation Suite</a>
+                    <a class="navbar-brand" href="\">Chroma Automation Suite</a>
                 </div>
                 <ul class="nav nav-tabs"> 
                     <li class="active">
@@ -36,15 +36,15 @@
                     <li>
                         <a href="/AboutPage">About</a>
                     </li>
+                    {% if not session.logged_in %}
                     <form action="/sign-in" method="post" class="navbar-form navbar-right" role="form">
-                        <div class="form-group">
-                            <input type="text" placeholder="Email" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <input type="password" placeholder="Password" class="form-control">
-                        </div>
-                        <button type="submit" class="btn btn-success">Sign in</button>
-                    </form>                     
+                        <input type="submit" class="btn" value="Sign In With Reddit">
+                    </form>
+                    {% else %}
+                    <form action="/sign-out" method="post" class="navbar-form navbar-right" role="form">
+                        <input type="submit" class="btn" value="Sign Out">
+                    </form>
+                    {% endif %}
                 </ul>
                 <!--/.navbar-collapse -->
             </div>

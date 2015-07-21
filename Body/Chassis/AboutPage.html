@@ -25,26 +25,24 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#">Chroma Automation Suite</a>
+                    <a class="navbar-brand" href="\">Chroma Automation Suite</a>
                 </div>
                 <ul class="nav nav-tabs"> 
                     <li class="active">
                         <a href="/">Home</a>
-                    </li>                     
-                    <li>
-</li>                     
+                    </li>
                     <li>
                         <a href="/ContactPage">Contact</a>
                     </li>
+                    {% if not session.logged_in %}
                     <form action="/sign-in" method="post" class="navbar-form navbar-right" role="form">
-                        <div class="form-group">
-                            <input type="text" placeholder="Email" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <input type="password" placeholder="Password" class="form-control">
-                        </div>
-                        <button type="submit" class="btn btn-success">Sign in</button>
-                    </form>                     
+                        <input type="submit" class="btn" value="Sign In With Reddit">
+                    </form>
+                    {% else %}
+                    <form action="/sign-out" method="post" class="navbar-form navbar-right" role="form">
+                        <input type="submit" class="btn" value="Sign Out">
+                    </form>
+                    {% endif %}
                 </ul>
                 <!--/.navbar-collapse -->
             </div>
@@ -63,7 +61,7 @@
                 <div class="col-md-4">
                     <h2>Alert Messaging System</h2>
                     <p>The CAS alert messaging system is the original, and arguably the primary feature of the CAS. It allows authorized mods, namely the generals of each side, to send messages to some or all of their commanders indicating the time and place of the next battle, as well as any other information. This is done through the web interface provided here.</p>
-                    <p><a class="btn btn-default" href="#" role="button">CAS Web Interface</a></p>
+                    <p><a class="btn btn-default" href="/" role="button">CAS Web Interface</a></p>
                 </div>
                 <div class="col-md-4">
                     <h2>Lore Aggregation</h2>
