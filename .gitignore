@@ -4,8 +4,9 @@
 Config/*
 /Defunct
 /static
-/templates
 *.sql
+*.db
+*.json
 
 ### Below are all standard things gerenated by .gitignore plugin for PyCharm
 ### JetBrains template

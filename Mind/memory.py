@@ -1,8 +1,11 @@
+import json
 import sqlite3
 
-"""Just some functions to help with database access/management. You've
-gotta pass the db object to each of these functions, but they don't
-require anything else."""
+HOME_DIRECTORY = '/home/jboggs/Documents/Coding'
+
+"""Just some functions to help with database and group access/management."""
+
+# DATABASE FUNCTIONS
 
 def handle_player_memory(db, username, **kwargs):
     """
@@ -16,8 +19,8 @@ def handle_player_memory(db, username, **kwargs):
     :return: True if a new player
     """
 
-    player_names = db.execute('select username from players')
-    if username in player_names:
+    player_names = db.execute('select username from players').fetchall()
+    if username in [name[0] for name in player_names]:
         update_player_knowledge(db, username, **kwargs)
     else:
         learn_new_player(db, username, **kwargs)
@@ -36,11 +39,11 @@ def update_player_knowledge(db, username, **kwargs):
     #for every kwarg passed, update that info in the database
     errors = []
     if kwargs is not None:
-        try:
-            for attrib, value in kwargs.iteritems():
-                db.execute('update players set ? = ? where username = ?', (attrib, value, username))
-        except KeyError as e:
-            errors.append((e, 'Key error on {}'.format(attrib)))
+        for attrib, value in kwargs.iteritems():
+            try:
+                db.execute('update players set {} = ? where username = ?'.format(attrib), (value, username))
+            except KeyError as e:
+                errors.append((e, 'Key error on {}'.format(attrib)))
     return len(kwargs), errors
 
 
@@ -58,7 +61,7 @@ def learn_new_player(db, username, **kwargs):
     if 'side' in attribs:
         side = kwargs['side']
     else:
-        side = 'Unknown'
+        side = '-1'
 
     if 'recruited' in attribs:
         recruited = kwargs['recruited']
@@ -75,39 +78,176 @@ def learn_new_player(db, username, **kwargs):
     else:
         accesstoken = ''
     #remember the player
-    db.execute('insert into players (username, side, recruited, usertype, accesstoken)' +
+    db.execute('insert or replace into players (username, side, recruited, usertype, accesstoken)' +
                'values (?, ?, ?, ?, ?)', (username, side, recruited, usertype, accesstoken))
     return True
 
 def get_players_with(db, **kwargs):
-    #fill in all the values
+    """
+    Retrieves all the players in the database with the given attributes
+
+    :param db: Database to look at
+    :param kwargs: attributes the players should have
+    :return: a list of players matching the search
+    """
+    # find the lists of players that match each value. So put every user
+    # with the given username in one list, every user with the given side
+    # in a second, etc. Then intersect the lists to give the final result.
+    # This is done since you can't wildcard values through the ? parameter,
+    # and maybe could be done faster (but not safer) through string
+    # construction.
     attribs = kwargs.keys()
     if 'username' in attribs:
         username = kwargs['username']
+        by_user = db.execute ('select username from players where username = ?',
+                              [username]).fetchall()
+        by_user = [user[0] for user in by_user]
     else:
-        username = '*'
+        by_user = []
 
     if 'side' in attribs:
         side = kwargs['side']
+        by_side = db.execute ('select username from players where side = ?',
+                              [side]).fetchall()
+        by_side = [user[0] for user in by_side]
     else:
-        side = '*'
+        by_side = []
 
     if 'recruited' in attribs:
         recruited = kwargs['recruited']
+        by_recr = db.execute ('select username from players where recruited = ?',
+                              [recruited]).fetchall()
+        by_recr = [user[0] for user in by_recr]
     else:
-        recruited = '*'
+        by_recr = []
 
     if 'usertype' in attribs:
         usertype = kwargs['usertype']
+        by_type = db.execute ('select username from players where usertype = ?',
+                              [usertype]).fetchall()
+        by_type = [user[0] for user in by_type]
     else:
-        usertype = '*'
+        by_type = []
 
-    #get players
-    query_response = db.execute('select * from players where '
-                                'username = ? and side = ? and '
-                                'recruited = ? and usertype = ?;', [username,
-                                                                    side,
-                                                                    recruited,
-                                                                    usertype]
-                                )
-    return query_response
+    # intersect lists and return players
+    query_result = []
+    query_result.extend(by_user)
+    query_result.extend(by_side)
+    query_result.extend(by_type)
+    query_result.extend(by_recr)
+    query_result = [user for user in query_result if
+                    (user in by_user or by_user==[]) and
+                    (user in by_side or by_side==[]) and
+                    (user in by_recr or by_recr==[]) and
+                    (user in by_type or by_type==[])]
+    return query_result
+
+def get_attrib_of_player(db, username, attrib):
+    """
+    Gets the specified attribute of the specified player from the DB
+
+    :param db: DB to look in
+    :param username: Name of target user
+    :param attrib: Attribute to find
+    :return: the attribute, or 'error'
+    """
+    try:
+        return db.execute('select {} from players where username = ?'.format(attrib),
+                          [username]).fetchone()[0]
+    except:
+        return 'error with {}'.format(attrib)
+
+
+# GROUP MANAGEMENT FUNCTIONS
+
+# get group jsons for both sides
+with open(HOME_DIRECTORY + '/ChromaAutomationSuite/Mind/groups.json', 'r') as gf:
+    groups = json.load(gf)
+OR_groups = groups['OR_groups']
+PW_groups = groups['PW_groups']
+
+def get_lists_of(side):
+    """
+    Returns the various lists of users the specified army has made.
+
+    :param side: Which army's lists to retrieve
+    :return: A list of the different lists an army has made (OR=0,PW=1)
+    """
+    if side == 0:
+        return OR_groups
+    elif side == 1:
+        return PW_groups
+    else:
+        return {}
+
+def add_player(side, list_name, player_name):
+    """
+    As the label says, adds a player to a list.
+
+    :param side: Which army's list to modify (OR=0,PW=1)
+    :param list_name: The name of the list to add to
+    :param player_name: Name of the player to add
+    :return: True if successful, false otherwise
+    """
+    if side == 0:
+        if list_name not in OR_groups:
+            return False
+        OR_groups[list_name].append(player_name)
+    elif side == 1:
+        if list_name not in PW_groups:
+            return False
+        if player_name not in PW_groups[list_name]:
+            PW_groups[list_name].append(player_name)
+    else:
+        return False
+    save_groups()
+
+def remove_player(side, list_name, player_name):
+    """
+    As the label says, adds a player to a list.
+
+    :param side: Which army's list to modify (OR=0,PW=1)
+    :param list_name: The name of the list to remove from to
+    :param player_name: Name of the player to remove
+    :return: True if successful, false otherwise
+    """
+    if side == 0:
+        if list_name not in OR_groups:
+            return False
+        OR_groups[list_name].remove(player_name)
+    elif side == 1:
+        if list_name not in PW_groups:
+            return False
+        if player_name in PW_groups[list_name]:
+            PW_groups[list_name].remove(player_name)
+    else:
+        return False
+    save_groups()
+    return True
+
+def create_list(side, list_name):
+    """
+    Creates a new list with the given name
+
+    :param side: Which army to make the list for (OR=0, PW=1)
+    :param list_name: Name of the new list
+    :return: True if successful, false otherwise
+    """
+    if side == 0:
+        if list_name in OR_groups:
+            return False
+        OR_groups[list_name] = []
+    elif side == 1:
+        if list_name in PW_groups:
+            return False
+        PW_groups[list_name] = []
+    else:
+        return False
+    save_groups()
+    return True
+
+def save_groups():
+    groups = {'OR_groups':OR_groups,
+              'PW_groups':PW_groups}
+    with open(HOME_DIRECTORY + '/ChromaAutomationSuite/Mind/groups.json', 'w') as gf:
+        json.dump(groups, gf)

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,7 +8,7 @@
         <meta name="author" content="">
         <title>Starter Template for Bootstrap</title>
         <!-- Bootstrap core CSS -->
-        <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+        <link href="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
         <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -65,49 +65,59 @@
         {% if session.logged_in %}
         <h2 align="center" style="display: block;">Welcome, {{ session.username }}. Chroma Automation Suite is {{ session.status }}</h2>
         <hr style="display: block;">
-        <div class="container big-box">
-            <form role="form" id="messageForm" class="form-normal" action="/sendMessage">
-                <div class="col-md-4"> 
-                    <div class="row">
-                        <div class="form-group"> 
-                            <label class="control-label" for="subjectField">Subject</label>
-                            <div class="">
-                                <input type="text" class="form-control" id="subjectField" placeholder="Message Subject" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group"> 
-                            <label class="control-label" for="recipientsDropdown">Recipients</label>
-                            <div class="">
-                                <div class="btn-group offset-1" id="recipientsDropdown" data-pg-collapsed> 
-                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">    Action 
-                                        <span class="caret"></span>
-                                    </button>                                     
-                                    <ul class="dropdown-menu" role="menu">
-                                        {% for group in groups %}
-                                        <li>
-                                            <a href="#">{{ group }}</a>
-                                        </li>
-                                        {% endfor %}
-                                    </ul>                                     
-                                </div>
-                            </div>
-                        </div>
-                    </div>                     
+        <div class="row">
+            <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"></div>
+            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+                <h3>ALERT SERVICES</h3>
+                <form action="/send_message" method="GET" name="Send_Message_Form">
+                    <h4>Subject Line:</h4>
+                    <input type="text" name="subject">
+                    <h4>Message Content:</h4>
+                    <textarea name="content" placeholder="Write the body of the message here!" rows="15" cols="45"></textarea>
+                    <h4>Recipients:</h4>
+                    <select>
+                        {% for group in groups.keys() %}
+                        <option value="{{ group }}">{{ group }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit" value="Send" class="btn">
+                </form>
+            </div>
+            <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                <h3>LIST MANAGER FOR LIST {{ listname }}</h3>
+                <div class="well">
+                    {% for user in listview %}
+                    <a href="/?listview={{ listname }}&remove={{ user }}">{{ user }}</a>,
+                    {% endfor %}
                 </div>
-                <div class="big-text-box-column col-md-8 col-xs-push-0">
-                    <div class="form-group" id="contentGroup" style="display: block;"> 
-                        <label class="control-label" for="contentField">Message content</label>                         
-                        <textarea class="form-control" id="contentField" rows="10" placeholder="Write the message to be sent here."></textarea>
-                    </div>
-                    <div class="well">{{ redditConversion }}</div>
+                <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+                    <form>
+                        <label for="list_chooser">Choose list:</label>
+                        <select onchange="window.location=this.value" name="list_chooser">
+                            <option selected value="/">Choose List</option>
+                            {% for group in groups.keys() %}
+                            <option value="/?listview={{ group }}">{{ group }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
                 </div>
-                <input type="submit" class="btn" value="Send Message">
-            </form>
-            <form action="/runMainLoop" name="InitForm" class="form-normal">
-                <input>
-            </form>
+                <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+                    <form action="/">
+                        <label for="new_list_name_input">New list:</label>
+                        <input type="text" name="new_name" placeholder="Name of list">
+                        <br><br><input type="submit" class="btn" value="Create">
+                    </form>
+                </div>
+                <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+                    <label for="players">Add a user to the list:</label>
+                    <select id="players" onchange="window.location.href=this.value">
+                        <option value="/" selected>Choose Player</option>
+                        {% for player in majors %}
+                        <option value="/?add={{ player }}">{{ player }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
         </div>
         {% endif %}
     </body>
