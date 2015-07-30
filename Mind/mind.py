@@ -48,7 +48,6 @@ class Mind(Process):
             #set antenna to correct side
             user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3' else 'Periwinkle_Prime_3')
             self.antenna.set_user(user)
-            print("Set antenna to {}".format(user))
             self.log.info("Set antenna to {}".format(user))
             time.sleep(2)
 
