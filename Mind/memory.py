@@ -1,7 +1,7 @@
 import json
 import sqlite3
 
-HOME_DIRECTORY = '/home/jboggs/Documents/Coding'
+HOME_DIRECTORY = '/home/jboggs/Documents/Coding/ChromaAutomationSuite'
 
 """Just some functions to help with database and group access/management."""
 
@@ -44,6 +44,7 @@ def update_player_knowledge(db, username, **kwargs):
                 db.execute('update players set {} = ? where username = ?'.format(attrib), (value, username))
             except KeyError as e:
                 errors.append((e, 'Key error on {}'.format(attrib)))
+    db.commit()
     return len(kwargs), errors
 
 
@@ -73,13 +74,14 @@ def learn_new_player(db, username, **kwargs):
     else:
         usertype = ''
 
-    if 'accesstoken' in attribs:
-        accesstoken = kwargs['accesstoken']
+    if 'accessInfo' in attribs:
+        accessInfo = kwargs['accessInfo']
     else:
-        accesstoken = ''
+        accessInfo = ''
     #remember the player
-    db.execute('insert or replace into players (username, side, recruited, usertype, accesstoken)' +
-               'values (?, ?, ?, ?, ?)', (username, side, recruited, usertype, accesstoken))
+    db.execute('insert or replace into players (username, side, recruited, usertype, accessInfo)' +
+               'values (?, ?, ?, ?, ?)', (username, side, recruited, usertype, accessInfo))
+    db.commit()
     return True
 
 def get_players_with(db, **kwargs):
@@ -101,45 +103,53 @@ def get_players_with(db, **kwargs):
         username = kwargs['username']
         by_user = db.execute ('select username from players where username = ?',
                               [username]).fetchall()
-        by_user = [user[0] for user in by_user]
+        by_user =set([user[0] for user in by_user])
     else:
-        by_user = []
+        by_user = None
 
     if 'side' in attribs:
         side = kwargs['side']
         by_side = db.execute ('select username from players where side = ?',
                               [side]).fetchall()
-        by_side = [user[0] for user in by_side]
+        by_side = set([user[0] for user in by_side])
     else:
-        by_side = []
+        by_side = None
 
     if 'recruited' in attribs:
         recruited = kwargs['recruited']
         by_recr = db.execute ('select username from players where recruited = ?',
                               [recruited]).fetchall()
-        by_recr = [user[0] for user in by_recr]
+        by_recr = set([user[0] for user in by_recr])
     else:
-        by_recr = []
+        by_recr = None
 
     if 'usertype' in attribs:
         usertype = kwargs['usertype']
         by_type = db.execute ('select username from players where usertype = ?',
                               [usertype]).fetchall()
-        by_type = [user[0] for user in by_type]
+        by_type = set([user[0] for user in by_type])
     else:
-        by_type = []
+        by_type = None
 
     # intersect lists and return players
-    query_result = []
-    query_result.extend(by_user)
-    query_result.extend(by_side)
-    query_result.extend(by_type)
-    query_result.extend(by_recr)
-    query_result = [user for user in query_result if
-                    (user in by_user or by_user==[]) and
-                    (user in by_side or by_side==[]) and
-                    (user in by_recr or by_recr==[]) and
-                    (user in by_type or by_type==[])]
+    query_result = set()
+    if by_user is not None:
+        query_result = query_result.union(by_user)
+    if by_side is not None:
+        query_result = query_result.union(by_side)
+    if by_recr is not None:
+        query_result = query_result.union(by_recr)
+    if by_type is not None:
+        query_result = query_result.union(by_type)
+
+    if by_user is not None:
+        query_result = query_result.intersection(by_user)
+    if by_side is not None:
+        query_result = query_result.intersection(by_side)
+    if by_recr is not None:
+        query_result = query_result.intersection(by_recr)
+    if by_type is not None:
+        query_result = query_result.intersection(by_type)
     return query_result
 
 def get_attrib_of_player(db, username, attrib):
@@ -161,7 +171,7 @@ def get_attrib_of_player(db, username, attrib):
 # GROUP MANAGEMENT FUNCTIONS
 
 # get group jsons for both sides
-with open(HOME_DIRECTORY + '/ChromaAutomationSuite/Mind/groups.json', 'r') as gf:
+with open(HOME_DIRECTORY + '/Mind/groups.json', 'r') as gf:
     groups = json.load(gf)
 OR_groups = groups['OR_groups']
 PW_groups = groups['PW_groups']
@@ -249,5 +259,5 @@ def create_list(side, list_name):
 def save_groups():
     groups = {'OR_groups':OR_groups,
               'PW_groups':PW_groups}
-    with open(HOME_DIRECTORY + '/ChromaAutomationSuite/Mind/groups.json', 'w') as gf:
+    with open(HOME_DIRECTORY + '/Mind/groups.json', 'w') as gf:
         json.dump(groups, gf)

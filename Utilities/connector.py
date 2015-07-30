@@ -1,10 +1,13 @@
 import sys
+import sqlite3
+from pickle import loads
 
 import praw
 from requests import ConnectionError
 from praw.errors import OAuthInvalidGrant
 
 from loggingSetup import create_logger
+from Mind import memory
 
 __author__ = 'Eliminioa'
 
@@ -27,9 +30,9 @@ class Connector(object):
                 connection.
         """
         # Defining instance variables
-        #TODO Make access info lookup SQL
         self.log = create_logger(__name__)
         self.cfg = config
+        self.db = sqlite3.connect(config['DATABASE'])
         self.r = praw.Reddit(
             user_agent=self.cfg["USER_AGENT"]
         )
@@ -91,24 +94,27 @@ class Connector(object):
         """
         Refresh the user's token.
         """
-        self.cfg._access_infos[self.username] = self.r.refresh_access_information(
-            self.access_infos[self.username]['refresh_token']
+        old_access_info = loads(memory.get_attrib_of_player(
+                                self.db, self.username, 'accessInfo'))
+        updated_info = self.r.refresh_access_information(
+            old_access_info['refresh_token']
         )
+        return updated_info
 
     def set_user(self, user):
         """
         Sets which user the bot is representing. Can also be used to
         reconnect to Reddit.
 
+        :param user: Username of user to switch to
         :return: True if the user was retrieved correctly.
         """
+        access_creds = loads(memory.get_attrib_of_player(
+                                self.db, user, 'accessInfo'))
         try:
-            self.r.set_access_credentials(**self.access_infos[user])
-        except KeyError as e:
-            self.log.exception('Invalid user: {}'.format(user))
-            raise e
+            self.r.set_access_credentials(**access_creds)
         except OAuthInvalidGrant as e:
-            self.log.exception('Bad OAuth code for! {}'.format(user))
+            self.log.exception('Bad OAuth code for {}!'.format(user))
             raise e
         try:
             self.r.get_me()

@@ -62,12 +62,12 @@
                 {%  endif %}
             </div>
         </div>
-        {% if session.logged_in %}
-        <h2 align="center" style="display: block;">Welcome, {{ session.username }}. Chroma Automation Suite is {{ session.status }}</h2>
+        {% if session.logged_in and session.usertype > 0 %}
+        <h2 align="center" style="display: block;">Welcome, {% if session.side == 1 %}Periwinkle {% else %} Orangered {% endif %} Commander {{ session.username }}. Chroma Automation Suite is {{ session.status }}</h2>
         <hr style="display: block;">
         <div class="row">
             <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"></div>
-            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4"> {# Alert Services #}
                 <h3>ALERT SERVICES</h3>
                 <form action="/send_message" method="GET" name="Send_Message_Form">
                     <h4>Subject Line:</h4>
@@ -113,10 +113,24 @@
                     <select id="players" onchange="window.location.href=this.value">
                         <option value="/" selected>Choose Player</option>
                         {% for player in majors %}
-                        <option value="/?add={{ player }}">{{ player }}</option>
+                        <option value="/?listview={{ listname }}&add={{ player }}">{{ player }}</option>
                         {% endfor %}
                     </select>
                 </div>
+            </div>
+            <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4" style="padding-top: 15px; padding-bottom: 15px;">
+                <h3 align="center">ADMINISTRATION PANEL</h3>
+                <form name="auth_bot_form" action="/auth_bot" method="get">
+                    <label for="bot_name">Username of Bot to Authorize:</label>
+                    <input type="text" name="bot_name" placeholder="Name of bot to authorize">
+                    <label for="bot_side">Bot Side:</label>
+                    <input type="radio" name="bot_side" value=1 checked>Periwinkle
+                    <input type="radio" name="bot_side" value=0>Orangered
+                    <input type="submit" value="Authorize">
+                </form>
+                <form name="run_bot_form" action="/run_bot" method="get">
+                    <input type="submit" value="Run Bots">
+                </form>
             </div>
         </div>
         {% endif %}
