@@ -1,4 +1,5 @@
-import sys, time
+import sys
+import time
 import sqlite3
 from multiprocessing import Process
 
@@ -49,6 +50,7 @@ class Mind(Process):
             user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3' else 'Periwinkle_Prime_3')
             self.antenna.set_user(user)
             self.log.info("Set antenna to {}".format(user))
+            sensors.recruit_getter(self.cfg, self.antenna, self.db)
             time.sleep(2)
 
             # sensors.get_recruit_commenters(side)

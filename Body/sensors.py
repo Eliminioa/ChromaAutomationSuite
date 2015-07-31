@@ -1,12 +1,38 @@
+import sqlite3
+
+from Mind import memory
+from Utilities.loggingSetup import create_logger
 """
 Module for letting the Chroma Automation Suite sense users both signing up
 to receive alerts from their generals and to sense which side players are on.
 """
+LOG = create_logger(__name__)
 
-def getUsers(cfg, antenna):
-    majors = cfg.majors
-    signupThread = r.get_submission(submission_id=self.cfg.alert_thread,comment_limit=None, comment_sort='new')
-    self.log.log_status(str(signupThread))
+def recruit_getter(cfg, db, antenna, side):
+    """
+    Get all of the new recruits from the proper side's recruitment thread
+    and return them in a list. Note that this will only return new
+    recruits.
+
+    :param cfg: Global configuration information to be used
+    :param db: Database to be used
+    :param antenna: Antenna connection to Reddit
+    :param side: Side to gather recruits from
+    :return: A list of new recruits.
+    """
+    majors = memory.get_players_with(db, side=side, recruited=True)
+    if side == 0:
+        signupThread = antenna.get_submission(submission_id=cfg['OR_RECRUIT_THREAD'],
+                                              comment_limit=None,
+                                              comment_sort='new')
+    elif side == 1:
+        signupThread = antenna.get_submission(submission_id=cfg['PW_RECRUIT_THREAD'],
+                                              comment_limit=None,
+                                              comment_sort='new')
+    else:
+        raise
+
+    LOG.debug('Got signup thread for side {} from {}'.format(side, signupThread.id))
     signupThread.replace_more_comments()
     #self.log.log_status('Replaced more comments')
     signUps = [sp for sp in signupThread.comments]
