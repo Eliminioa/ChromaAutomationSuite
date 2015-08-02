@@ -63,3 +63,44 @@ class InvalidUserError(ChromaError):
         self.module = module
         self.username = username
         self.msg = "Bad Username: {}".format(self.username)
+
+
+class AttribError(ChromaError):
+    """
+    If the program tries to get an attribute of a user or lore that doesn't
+    really exist, this is thrown. This is a parent class for UserAttribError
+    and LoreAttribError.
+    """
+    def __init__(self, module, attrib):
+        super(AttribError, self).__init__()
+        self.module = module
+        self.attrib = attrib
+        self.msg = "Invalid attribute: {}".format(self.attrib)
+
+
+class UserAttribError(AttribError):
+    """
+    If the program tries to get an attribute of a user that doesn't really
+    exist or is unknown.
+    """
+    def __init__(self, module, attrib, user):
+        super(UserAttribError, self).__init__()
+        self.module = module
+        self.attrib = attrib
+        self.msg = "Invalid user attribute for {}: {}".format(
+            user,
+            self.attrib)
+
+
+class LoreAttribError(AttribError):
+    """
+    If the program tries to get an attribute of a lore that doesn't really
+    exist or is unknown.
+    """
+    def __init__(self, module, attrib, lore):
+        super(LoreAttribError, self).__init__()
+        self.module = module
+        self.attrib = attrib
+        self.msg = "Invalid lore attribute for {}: {}".format(
+            lore,
+            self.attrib)

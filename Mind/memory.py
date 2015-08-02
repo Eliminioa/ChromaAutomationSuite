@@ -1,6 +1,8 @@
 import json
 import sqlite3
 
+from Utilities import CASexcepts as excs
+
 HOME_DIRECTORY = '/home/jboggs/Documents/Coding/ChromaAutomationSuite'
 
 """Just some functions to help with database and group access/management."""
@@ -42,8 +44,8 @@ def update_player_knowledge(db, username, **kwargs):
         for attrib, value in kwargs.iteritems():
             try:
                 db.execute('update players set {} = ? where username = ?'.format(attrib), (value, username))
-            except KeyError as e:
-                errors.append((e, 'Key error on {}'.format(attrib)))
+            except KeyError:
+                raise excs.UserAttribError(__name__, attrib, username)
     db.commit()
     return len(kwargs), errors
 
@@ -62,7 +64,7 @@ def learn_new_player(db, username, **kwargs):
     if 'side' in attribs:
         side = kwargs['side']
     else:
-        side = '-1'
+        side = '-2'
 
     if 'recruited' in attribs:
         recruited = kwargs['recruited']
@@ -165,7 +167,7 @@ def get_attrib_of_player(db, username, attrib):
         return db.execute('select {} from players where username = ?'.format(attrib),
                           [username]).fetchone()[0]
     except:
-        return 'error with {}'.format(attrib)
+        raise excs.UserAttribError(__name__, attrib, username)
 
 
 # GROUP MANAGEMENT FUNCTIONS

@@ -35,11 +35,12 @@ class Mind(Process):
 
     def think(self):
         user = None
+        side = None
         self.log.info("Began thinking")
         signal_received = self.nerves.poll(None)
         while signal_received:
             # choose which side to work with
-            # use sensors.get_recruit_commenters to get top-level comment authors
+            # use sensors.get_recruit_commenters to get new top-level comment authors
             # pass list of new top-level commenters to self.register_recruits
             # scan Chromabot's battle history with sensors.retrieve_combatants and receive a list of users and their side
             # pass this list through memory.handle_player_memory to store user sides
@@ -48,9 +49,10 @@ class Mind(Process):
 
             #set antenna to correct side
             user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3' else 'Periwinkle_Prime_3')
+            side = (0 if side == 1 else 1)
             self.antenna.set_user(user)
             self.log.info("Set antenna to {}".format(user))
-            sensors.recruit_getter(self.cfg, self.antenna, self.db)
+            sensors.recruit_getter(self.cfg, self.antenna, self.db, side)
             time.sleep(2)
 
             # sensors.get_recruit_commenters(side)

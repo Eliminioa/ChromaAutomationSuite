@@ -1,12 +1,12 @@
-import sqlite3
-
 from Mind import memory
+from Utilities import CASexcepts as excs
 from Utilities.loggingSetup import create_logger
 """
 Module for letting the Chroma Automation Suite sense users both signing up
 to receive alerts from their generals and to sense which side players are on.
 """
 LOG = create_logger(__name__)
+
 
 def recruit_getter(cfg, db, antenna, side):
     """
@@ -20,49 +20,36 @@ def recruit_getter(cfg, db, antenna, side):
     :param side: Side to gather recruits from
     :return: A list of new recruits.
     """
+    # retrieve majors from DB
     majors = memory.get_players_with(db, side=side, recruited=True)
-    if side == 0:
-        signupThread = antenna.get_submission(submission_id=cfg['OR_RECRUIT_THREAD'],
-                                              comment_limit=None,
-                                              comment_sort='new')
-    elif side == 1:
-        signupThread = antenna.get_submission(submission_id=cfg['PW_RECRUIT_THREAD'],
-                                              comment_limit=None,
-                                              comment_sort='new')
-    else:
-        raise
 
-    LOG.debug('Got signup thread for side {} from {}'.format(side, signupThread.id))
-    signupThread.replace_more_comments()
-    #self.log.log_status('Replaced more comments')
-    signUps = [sp for sp in signupThread.comments]
-    #self.log.log_var("signUps",signUps)
-    troopList = majors
-    for signUp in signUps:
-        recruit = signUp.author.__str__()
-        if self.detect_ORed(signUp.author) and not (recruit in troopList):
-            troopList.append(recruit)
-            #self.replyToSignup(signUp,False)
-            print("{}: "+str(signUp.author)+" ignored!".format(self.name))
-            self.log.log_status("{}: "+str(signUp.author)+" ignored!".format(self.name))
-            continue
-        self.log.log_var("signUp",signUp)
-        try:
-            if not (recruit in troopList):
-                troopList.append(recruit)
-                #self.replyToSignup(signUp)
-                self.log.log_status("{}: Added user {} to troopList.".format(self.name, recruit))
-                print "{}: Added user {} to troopList. ".format(self.name, recruit),len(troopList)
-        except:
-            self.log.log_status("ERROR:")
-            self.log.log_var("recruit",recruit)
-            pass
-    self.log.log_status("{}: Retrieved Majors".format(self.name))
-    #self.log.log_var("troopList",troopList)
-    for major in troopList:
-        self.cfg.add_major(major)
-    self.cfg.save_cfg(self.cfg.conffile)
-    return troopList
+    # retrieve sign up thread from reddit
+    if side == 0:
+        signup_thread = antenna.get_submission(
+            submission_id=cfg['OR_RECRUIT_THREAD'],
+            comment_limit=None,
+            comment_sort='new')
+    elif side == 1:
+        signup_thread = antenna.get_submission(
+            submission_id=cfg['PW_RECRUIT_THREAD'],
+            comment_limit=None,
+            comment_sort='new')
+    else:
+        raise excs.InvalidSideError(__name__, side)
+    LOG.debug('Got signup thread for side {} from {}'.format(
+        side,
+        signup_thread.id))
+    # and replace more comments
+    signup_thread.replace_more_comments()
+    LOG.debug('Replaced more comments')
+
+    # list comment authors from comment generator
+    all_recruits = [cmnt.author for cmnt in signup_thread.comments]
+
+    # filter out already registered recruits
+    new_recruits = [recr for recr in all_recruits if recr not in majors]
+
+    return new_recruits
 
 def checkForGo(self):
     """Checks Prime's inbox for messages to send out."""
