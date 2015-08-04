@@ -30,8 +30,6 @@ BODY_ANTENNA = connector.Connector(CONFIG)
 SENSORY_NEURON, MOTOR_NEURON = Pipe()
 CONTROLLER = Lock()
 
-MIND = Mind('MIND', CONFIG, MIND_ANTENNA, SENSORY_NEURON, CONTROLLER)
-BODY = Body('BODY', CONFIG, BODY_ANTENNA, MOTOR_NEURON, CONTROLLER)
 
 def init_db():
     """Initializes the database."""
@@ -50,6 +48,8 @@ class Soul(Process):
         self.name = "SOUL"
 
     def run(self):
+        MIND = Mind('MIND', CONFIG, MIND_ANTENNA, SENSORY_NEURON, CONTROLLER)
+        BODY = Body('BODY', CONFIG, BODY_ANTENNA, MOTOR_NEURON, CONTROLLER)
         MIND.start()
         BODY.start()
 
