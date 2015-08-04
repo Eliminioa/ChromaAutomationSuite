@@ -205,7 +205,7 @@ class Body(Process):
     def __init__(self, name, config, antenna, nerves, lock):
         Process.__init__(self)
         self.name = name
-        #self.daemon = True
+        self.daemon = True
         global CONFIG
         CONFIG = config
         global ANTENNA
