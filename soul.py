@@ -18,17 +18,11 @@
 #######################################################################
 import sqlite3
 from multiprocessing import Process, Pipe, Lock, active_children
+import time
 
 from Body.body import Body
 from Mind.mind import Mind
 from Utilities import connector, configReader
-
-CONFIG = configReader.read()
-MIND_ANTENNA = connector.Connector(CONFIG)
-BODY_ANTENNA = connector.Connector(CONFIG)
-
-SENSORY_NEURON, MOTOR_NEURON = Pipe()
-CONTROLLER = Lock()
 
 
 def init_db():
@@ -52,9 +46,17 @@ class Soul(Process):
         BODY = Body('BODY', CONFIG, BODY_ANTENNA, MOTOR_NEURON, CONTROLLER)
         MIND.start()
         BODY.start()
+        while True:
+            time.sleep(3600)
 
 
 if __name__ == '__main__':
+    CONFIG = configReader.read()
+    MIND_ANTENNA = connector.Connector(CONFIG)
+    BODY_ANTENNA = connector.Connector(CONFIG)
+
+    SENSORY_NEURON, MOTOR_NEURON = Pipe()
+    CONTROLLER = Lock()
     SOUL = Soul()
     SOUL.start()
     # MIND.start()
