@@ -29,6 +29,7 @@ def handle_player_memory(db, username, **kwargs):
         return True
     return False
 
+
 def update_player_knowledge(db, username, **kwargs):
     """
     Updates the bot's knowledge of a player
@@ -43,7 +44,10 @@ def update_player_knowledge(db, username, **kwargs):
     if kwargs is not None:
         for attrib, value in kwargs.iteritems():
             try:
-                db.execute('update players set {} = ? where username = ?'.format(attrib), (value, username))
+                db.execute(
+                    'update players set {} = ? where username = ?'.format(
+                        attrib),
+                    (value, username))
             except KeyError:
                 raise excs.UserAttribError(__name__, attrib, username)
     db.commit()
@@ -164,8 +168,9 @@ def get_attrib_of_player(db, username, attrib):
     :return: the attribute, or 'error'
     """
     try:
-        return db.execute('select {} from players where username = ?'.format(attrib),
-                          [username]).fetchone()[0]
+        return db.execute(
+            'select {} from players where username = ?'.format(attrib),
+            [username]).fetchone()[0]
     except:
         raise excs.UserAttribError(__name__, attrib, username)
 
@@ -278,6 +283,7 @@ def create_list(side, list_name):
     return True
 
 
+# noinspection PyShadowingNames
 def save_groups():
     groups = {'OR_groups':OR_groups,
               'PW_groups':PW_groups}

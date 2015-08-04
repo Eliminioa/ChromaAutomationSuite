@@ -60,10 +60,6 @@ class Mind(Process):
             # TODO Keep track of user troop counts and battle counts too
             # TODO Aggregate lore from Chromalore and battles and store it
 
-            # Lock the processes so shit doesn't get mixed up (I think this
-            # is how this works?)
-            self.lock.acquire()
-
             #set antenna to correct side
             user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3'
                     else 'Periwinkle_Prime_3')
@@ -72,20 +68,25 @@ class Mind(Process):
             self.log.info("Set antenna to {}".format(user))
 
             # use sensors.get_recruit_commenters to get new top-level comments
+            # lock stuff down while handling the DB
+            self.lock.acquire()
             new_recruits = botIO.recruit_getter(self.cfg,
                                                 self.db,
                                                 self.antenna,
                                                 side)
+            self.lock.release()
             self.log.info("Retrieved {} new recruits".format(
                 len(new_recruits)))
 
             # handle the recruits
             for recruit in new_recruits:
+                self.lock.acquire()
                 memory.handle_player_memory(self.db,
                                             str(recruit.author),
                                             side=side,
                                             recruited=True)
                 memory.add_player(side, 'all', str(recruit.author))
+                self.lock.release()
                 self.log.info("Handled player {} of side {}".format(
                     str(recruit.author), side))
                 print("Handled player {} of side {}".format(
@@ -101,18 +102,19 @@ class Mind(Process):
 
             # scan battle history with sensors.retrieve_combatants and
             # receive a dict of users and their side
+            self.lock.acquire()
             combatant_dict = botIO.retrieve_combatants(self.antenna)
+            self.lock.release()
 
             # handle combatants
             for combatant in combatant_dict:
+                self.lock.acquire()
                 memory.handle_player_memory(self.db,
                                             combatant,
                                             side=combatant_dict[combatant])
+                self.lock.release()
 
             # refresh bot's token
 
-
-            # unlock the thread while sleeping
-            self.lock.release()
-
+            print("Done with {}'s cycle".format(user))
             time.sleep(30)

@@ -1,13 +1,12 @@
 from pickle import dumps
-from logging import Logger
-from multiprocessing import Process, Pipe, Lock
+from multiprocessing import Process
 import sqlite3
 
 from flask import Flask, g, render_template, request, redirect, session
 
 from Mind import memory
-from Utilities.connector import Connector
 from Utilities.loggingSetup import create_logger
+
 
 # Global vars
 CAS = Flask(__name__, template_folder='Chassis')
@@ -40,6 +39,7 @@ def commit_DB(response):
 # TODO Make a teardown function that gracefully deals with unforeseen errors
 
 # ROUTING METHODS
+# noinspection PyUnresolvedReferences,PyUnresolvedReferences
 @CAS.route('/')
 def home_page():
     # tells the session the bot is online. Might actually make this useful
@@ -55,7 +55,7 @@ def home_page():
 
     # get the name of the list being managed, if any
     listname = request.args.get('listview')
-    listname = (listname if listname!=None else 'all')
+    listname = (listname if listname is not None else 'all')
     if listname:
         LOG.debug("Listname = {}".format(listname))
 
@@ -90,7 +90,7 @@ def home_page():
     except KeyError:
         listview = ['There\'s nothing here!']
     try:
-        majors = memory.get_players_with(g.db, side=session['side'])
+        majors = memory.get_players_with(g.db, side=session['side'], recruited=True)
     except sqlite3.InterfaceError:
         majors = []
 
@@ -102,12 +102,14 @@ def home_page():
                                version=CONFIG['VERSION'])
 
 
+# noinspection PyUnresolvedReferences
 @CAS.route('/AboutPage')
 def about_page():
     LOG.debug('Rendering About Page')
     return render_template("AboutPage.html")
 
 
+# noinspection PyUnresolvedReferences
 @CAS.route('/ContactPage')
 def contact_page():
     LOG.debug('Rendering Contact Page')

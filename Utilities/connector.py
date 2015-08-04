@@ -12,6 +12,7 @@ from Mind import memory
 __author__ = 'Eliminioa'
 
 class Connector(object):
+    # noinspection PyRedundantParentheses
     USER_SCOPES = {'bot': ('edit',
                            'identity',
                            'privatemessages',
@@ -69,7 +70,7 @@ class Connector(object):
             access_information = self.r.get_access_information(
                 code=access_code
             )
-        except OAuthInvalidGrant as e:
+        except OAuthInvalidGrant:
             self.log.exception('Bad OAuth code!')
             raise
 
@@ -118,6 +119,7 @@ class Connector(object):
         except OAuthInvalidGrant as e:
             self.log.exception('Bad OAuth code for {}!'.format(user))
             raise e
+        # noinspection PyBroadException
         try:
             self.r.get_me()
             return True

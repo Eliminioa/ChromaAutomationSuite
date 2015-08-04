@@ -68,6 +68,7 @@ def retrieve_combatants(antenna):
     """
     # retrieve bot comments
     bot = antenna.get_redditor('chromabot')
+    # noinspection PyProtectedMember
     bot_content = antenna.get_content(url=bot._url, limit=None)
     comments = [item for item in bot_content if isinstance(item, praw.objects.Comment)]
 
@@ -90,9 +91,9 @@ def retrieve_combatants(antenna):
             # side is the second part
             side = player.split()[1]
 
-            if side == 'Orangered':
+            if side == '(Orangered)':
                 combatant_dict[username] = 0
-            elif side == 'Perwinkle':
+            elif side == '(Periwinkle)':
                 combatant_dict[username] = 1
             else:
                 raise excs.InvalidSideError(__name__, side)

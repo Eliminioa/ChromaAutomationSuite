@@ -1,4 +1,3 @@
-import re
 import os
 import logging
 
@@ -9,6 +8,7 @@ LOGGING_ON = True
 HOME_DIRECTORY = '/home/jboggs/Documents/Coding/ChromaAutomationSuite'
 
 def create_logger(name):
+    # noinspection PyUnusedLocal
     dir_path = os.path.abspath(os.curdir)
     log_filename = HOME_DIRECTORY + '/Utilities/PrimeLog.log'
 
