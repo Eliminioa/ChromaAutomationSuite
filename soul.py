@@ -17,7 +17,7 @@
 # Thanks for reading!
 #######################################################################
 import sqlite3
-from multiprocessing import Pipe
+from multiprocessing import Process, Pipe, Lock, active_children
 
 from Body.body import Body
 from Mind.mind import Mind
@@ -28,9 +28,10 @@ MIND_ANTENNA = connector.Connector(CONFIG)
 BODY_ANTENNA = connector.Connector(CONFIG)
 
 SENSORY_NEURON, MOTOR_NEURON = Pipe()
+CONTROLLER = Lock()
 
-MIND = Mind('MIND', CONFIG, MIND_ANTENNA, SENSORY_NEURON)
-BODY = Body('BODY', CONFIG, BODY_ANTENNA, MOTOR_NEURON)
+MIND = Mind('MIND', CONFIG, MIND_ANTENNA, SENSORY_NEURON, CONTROLLER)
+BODY = Body('BODY', CONFIG, BODY_ANTENNA, MOTOR_NEURON, CONTROLLER)
 
 def init_db():
     """Initializes the database."""
@@ -39,6 +40,23 @@ def init_db():
         db.cursor().executescript(f.read())
     db.commit()
 
-if __name__ == "__main__":
-    MIND.start()
-    BODY.start()
+
+class Soul(Process):
+    """
+    Parent process for the MIND and BODY processes.
+    """
+    def __init__(self):
+        Process.__init__(self)
+        self.name = "SOUL"
+
+    def run(self):
+        MIND.start()
+        BODY.start()
+
+
+if __name__ == '__main__':
+    SOUL = Soul()
+    SOUL.start()
+    # MIND.start()
+    # BODY.start()
+    print(active_children())

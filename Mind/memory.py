@@ -170,6 +170,21 @@ def get_attrib_of_player(db, username, attrib):
         raise excs.UserAttribError(__name__, attrib, username)
 
 
+def remove_player_from_DB(db, username):
+    """
+    Removes the record of a player from the database
+
+    :param db: Database to remove from
+    :param username: User to remove
+    :return: True if successful
+    """
+    try:
+        db.execute('delete from players where username=?', [username])
+    except KeyError:
+        raise excs.InvalidUserError(__name__, username)
+    except:
+        raise
+
 # GROUP MANAGEMENT FUNCTIONS
 
 # get group jsons for both sides
@@ -177,6 +192,7 @@ with open(HOME_DIRECTORY + '/Mind/groups.json', 'r') as gf:
     groups = json.load(gf)
 OR_groups = groups['OR_groups']
 PW_groups = groups['PW_groups']
+
 
 def get_lists_of(side):
     """
@@ -191,6 +207,7 @@ def get_lists_of(side):
         return PW_groups
     else:
         return {}
+
 
 def add_player(side, list_name, player_name):
     """
@@ -213,6 +230,7 @@ def add_player(side, list_name, player_name):
     else:
         return False
     save_groups()
+
 
 def remove_player(side, list_name, player_name):
     """
@@ -237,6 +255,7 @@ def remove_player(side, list_name, player_name):
     save_groups()
     return True
 
+
 def create_list(side, list_name):
     """
     Creates a new list with the given name
@@ -257,6 +276,7 @@ def create_list(side, list_name):
         return False
     save_groups()
     return True
+
 
 def save_groups():
     groups = {'OR_groups':OR_groups,

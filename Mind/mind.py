@@ -16,9 +16,11 @@ class Mind(Process):
     on, and in the future maybe do some battle-related things.
     """
 
-    def __init__(self, name, config, antenna, nerves):
+    def __init__(self, name, config, antenna, nerves, lock):
         Process.__init__(self)
-        self.name=name
+        self.name = name
+        #self.daemon = True
+        self.lock = lock
         self.antenna = antenna
         self.cfg = config
         self.nerves = nerves
@@ -26,6 +28,7 @@ class Mind(Process):
         self.db = sqlite3.connect(config['DATABASE'])
 
     def run(self):
+        print("MIND PID: {}".format(self.pid))
         while True:
             try:
                 self.log.debug("Began MIND process")
@@ -35,7 +38,7 @@ class Mind(Process):
                 self.log.error("Error in thinking: {}: {}".format(
                     exctype,
                     value))
-
+                raise
 
     def listen(self):
         """
@@ -47,11 +50,19 @@ class Mind(Process):
         """
         user = None
         side = None
-        self.log.info("Began thinking")
+
+        # wait for signal to begin
         signal_received = self.nerves.poll(None)
+        self.log.info("Began thinking")
+
+        # once it gets the signal to go
         while signal_received:
             # TODO Keep track of user troop counts and battle counts too
             # TODO Aggregate lore from Chromalore and battles and store it
+
+            # Lock the processes so shit doesn't get mixed up (I think this
+            # is how this works?)
+            self.lock.acquire()
 
             #set antenna to correct side
             user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3'
@@ -62,9 +73,11 @@ class Mind(Process):
 
             # use sensors.get_recruit_commenters to get new top-level comments
             new_recruits = botIO.recruit_getter(self.cfg,
-                                                  self.antenna,
-                                                  self.db,
-                                                  side)
+                                                self.db,
+                                                self.antenna,
+                                                side)
+            self.log.info("Retrieved {} new recruits".format(
+                len(new_recruits)))
 
             # handle the recruits
             for recruit in new_recruits:
@@ -72,12 +85,19 @@ class Mind(Process):
                                             str(recruit.author),
                                             side=side,
                                             recruited=True)
+                memory.add_player(side, 'all', str(recruit.author))
+                self.log.info("Handled player {} of side {}".format(
+                    str(recruit.author), side))
+                print("Handled player {} of side {}".format(
+                    str(recruit.author), side))
 
                 # if the bot hasn't already replied, then do so
                 if user not in [str(rep.author) for rep in recruit.replies
                                 if not isinstance(rep,
                                         praw.objects.MoreComments)]:
                     botIO.reply_to_signup(recruit, side, self.cfg)
+                    self.log.debug("Replied to player {}".format(
+                        str(recruit.author), side))
 
             # scan battle history with sensors.retrieve_combatants and
             # receive a dict of users and their side
@@ -89,4 +109,10 @@ class Mind(Process):
                                             combatant,
                                             side=combatant_dict[combatant])
 
-            time.sleep(2)
+            # refresh bot's token
+
+
+            # unlock the thread while sleeping
+            self.lock.release()
+
+            time.sleep(30)

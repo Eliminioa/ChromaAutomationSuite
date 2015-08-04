@@ -93,6 +93,8 @@ class Connector(object):
     def refresh_token(self):
         """
         Refresh the user's token.
+
+        :return: A new access token
         """
         old_access_info = loads(memory.get_attrib_of_player(
                                 self.db, self.username, 'accessInfo'))

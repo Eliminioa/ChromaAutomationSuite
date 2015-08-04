@@ -38,7 +38,6 @@ class InvalidSideError(ChromaError):
         :param side: Invalid parameter
         :return: An InvalidSideError
         """
-        super(InvalidSideError, self).__init__()
         self.module = module
         self.side = side
         self.msg = "Bad Side: {}".format(self.side)
@@ -59,7 +58,6 @@ class InvalidUserError(ChromaError):
         :param username: Invalid username passed
         :return: An InvalidUserError
         """
-        super(InvalidUserError, self).__init__()
         self.module = module
         self.username = username
         self.msg = "Bad Username: {}".format(self.username)
@@ -72,7 +70,6 @@ class AttribError(ChromaError):
     and LoreAttribError.
     """
     def __init__(self, module, attrib):
-        super(AttribError, self).__init__()
         self.module = module
         self.attrib = attrib
         self.msg = "Invalid attribute: {}".format(self.attrib)
@@ -84,7 +81,6 @@ class UserAttribError(AttribError):
     exist or is unknown.
     """
     def __init__(self, module, attrib, user):
-        super(UserAttribError, self).__init__()
         self.module = module
         self.attrib = attrib
         self.msg = "Invalid user attribute for {}: {}".format(
@@ -98,7 +94,6 @@ class LoreAttribError(AttribError):
     exist or is unknown.
     """
     def __init__(self, module, attrib, lore):
-        super(LoreAttribError, self).__init__()
         self.module = module
         self.attrib = attrib
         self.msg = "Invalid lore attribute for {}: {}".format(
