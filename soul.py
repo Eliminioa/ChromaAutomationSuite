@@ -25,6 +25,14 @@ from Mind.mind import Mind
 from Utilities import connector, configReader
 
 
+CONFIG = configReader.read()
+MIND_ANTENNA = connector.Connector(CONFIG)
+BODY_ANTENNA = connector.Connector(CONFIG)
+
+SENSORY_NEURON, MOTOR_NEURON = Pipe()
+CONTROLLER = Lock()
+
+
 def init_db():
     """Initializes the database."""
     db = sqlite3.connect(CONFIG['DATABASE'])
@@ -51,12 +59,6 @@ class Soul(Process):
 
 
 if __name__ == '__main__':
-    CONFIG = configReader.read()
-    MIND_ANTENNA = connector.Connector(CONFIG)
-    BODY_ANTENNA = connector.Connector(CONFIG)
-
-    SENSORY_NEURON, MOTOR_NEURON = Pipe()
-    CONTROLLER = Lock()
     SOUL = Soul()
     SOUL.start()
     # MIND.start()

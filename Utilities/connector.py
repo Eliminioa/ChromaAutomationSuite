@@ -91,7 +91,7 @@ class Connector(object):
         print OAuth_URL
         return OAuth_URL
 
-    def refresh_token(self):
+    def refresh_token_user(self):
         """
         Refresh the user's token.
 
@@ -129,7 +129,7 @@ class Connector(object):
 
     def get_mods_of_subreddit(self, subreddit, string=False):
         """
-        Get the moderators of a given subreddit.
+        Get the moderators of a given subreddit
 
         :param subreddit: The name of the subreddit to get the mods of
         :param string: Whether mods should be returned as Redditor objects

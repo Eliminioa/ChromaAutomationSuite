@@ -192,13 +192,23 @@ def remove_player_from_DB(db, username):
 
 # GROUP MANAGEMENT FUNCTIONS
 
-# get group jsons for both sides
-with open(HOME_DIRECTORY + '/Mind/groups.json', 'r') as gf:
-    groups = json.load(gf)
-OR_groups = groups['OR_groups']
-PW_groups = groups['PW_groups']
+OR_GROUPS = {}
+PW_GROUPS = {}
+
+def refresh_groups(funct):
+    def new_funct(*args, **kwargs):
+        # get group jsons for both sides
+        with open(HOME_DIRECTORY + '/Mind/groups.json', 'r') as gf:
+            groups = json.load(gf)
+        global OR_GROUPS
+        OR_GROUPS = groups['OR_groups']
+        global PW_GROUPS
+        PW_GROUPS = groups['PW_groups']
+        return funct(*args, **kwargs)
+    return new_funct
 
 
+@refresh_groups
 def get_lists_of(side):
     """
     Returns the various lists of users the specified army has made.
@@ -207,13 +217,13 @@ def get_lists_of(side):
     :return: A list of the different lists an army has made (OR=0,PW=1)
     """
     if side == 0:
-        return OR_groups
+        return OR_GROUPS
     elif side == 1:
-        return PW_groups
+        return PW_GROUPS
     else:
         return {}
 
-
+@refresh_groups
 def add_player(side, list_name, player_name):
     """
     As the label says, adds a player to a list.
@@ -224,19 +234,19 @@ def add_player(side, list_name, player_name):
     :return: True if successful, false otherwise
     """
     if side == 0:
-        if list_name not in OR_groups:
+        if list_name not in OR_GROUPS:
             return False
-        OR_groups[list_name].append(player_name)
+        OR_GROUPS[list_name].append(player_name)
     elif side == 1:
-        if list_name not in PW_groups:
+        if list_name not in PW_GROUPS:
             return False
-        if player_name not in PW_groups[list_name]:
-            PW_groups[list_name].append(player_name)
+        if player_name not in PW_GROUPS[list_name]:
+            PW_GROUPS[list_name].append(player_name)
     else:
         return False
     save_groups()
 
-
+@refresh_groups
 def remove_player(side, list_name, player_name):
     """
     As the label says, adds a player to a list.
@@ -247,20 +257,20 @@ def remove_player(side, list_name, player_name):
     :return: True if successful, false otherwise
     """
     if side == 0:
-        if list_name not in OR_groups:
+        if list_name not in OR_GROUPS:
             return False
-        OR_groups[list_name].remove(player_name)
+        OR_GROUPS[list_name].remove(player_name)
     elif side == 1:
-        if list_name not in PW_groups:
+        if list_name not in PW_GROUPS:
             return False
-        if player_name in PW_groups[list_name]:
-            PW_groups[list_name].remove(player_name)
+        if player_name in PW_GROUPS[list_name]:
+            PW_GROUPS[list_name].remove(player_name)
     else:
         return False
     save_groups()
     return True
 
-
+@refresh_groups
 def create_list(side, list_name):
     """
     Creates a new list with the given name
@@ -270,22 +280,21 @@ def create_list(side, list_name):
     :return: True if successful, false otherwise
     """
     if side == 0:
-        if list_name in OR_groups:
+        if list_name in OR_GROUPS:
             return False
-        OR_groups[list_name] = []
+        OR_GROUPS[list_name] = []
     elif side == 1:
-        if list_name in PW_groups:
+        if list_name in PW_GROUPS:
             return False
-        PW_groups[list_name] = []
+        PW_GROUPS[list_name] = []
     else:
         return False
     save_groups()
     return True
 
-
 # noinspection PyShadowingNames
 def save_groups():
-    groups = {'OR_groups':OR_groups,
-              'PW_groups':PW_groups}
+    groups = {'OR_groups': OR_GROUPS,
+              'PW_groups': PW_GROUPS}
     with open(HOME_DIRECTORY + '/Mind/groups.json', 'w') as gf:
         json.dump(groups, gf)

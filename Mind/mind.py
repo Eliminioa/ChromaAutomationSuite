@@ -2,6 +2,7 @@ import sys
 import time
 import sqlite3
 from multiprocessing import Process
+from pickle import dumps
 
 import praw
 
@@ -48,8 +49,8 @@ class Mind(Process):
 
         :return: Nothing as of now
         """
-        user = None
-        side = None
+        user = 'Periwinkle_Prime_3'
+        side = 1
 
         # wait for signal to begin
         signal_received = self.nerves.poll(None)
@@ -61,9 +62,9 @@ class Mind(Process):
             # TODO Aggregate lore from Chromalore and battles and store it
 
             #set antenna to correct side
-            user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3'
-                    else 'Periwinkle_Prime_3')
-            side = (0 if side == 1 else 1)
+            # DEBUG user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3'
+            # DEBUG       else 'Periwinkle_Prime_3')
+            # DEBUG side = (0 if side == 1 else 1)
             self.antenna.set_user(user)
             self.log.info("Set antenna to {}".format(user))
 
@@ -115,6 +116,10 @@ class Mind(Process):
                 self.lock.release()
 
             # refresh bot's token
+            new_access_info = self.antenna.refresh_token_user()
+            memory.handle_player_memory(self.db,
+                                        user,
+                                        accessInfo=dumps(new_access_info))
 
             print("Done with {}'s cycle".format(user))
             time.sleep(30)

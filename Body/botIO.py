@@ -25,7 +25,7 @@ def recruit_getter(cfg, db, antenna, side):
     :return: A list of new recruits.
     """
     # retrieve majors from DB
-    majors = memory.get_players_with(db, side=side, recruited=True)
+    majors = memory.get_players_with(db, recruited=True)
 
     # retrieve sign up thread from reddit
     if side == 0:
