@@ -81,8 +81,18 @@ class Mind(Process):
                 botIO.reply_to_signup(recruit, side, self.cfg)
                 self.log.debug("Replied to player {}".format(
                     str(recruit.author), side))
+        return new_recruits
 
-    def get_combatants(self, user, side):
+    def get_combatants(self):
+        """
+        Retrieve chromabot's post history and examine skirmishes to identify
+        players and their side. This is the ultimate arbiter of user side,
+        superseding the recruit thread side. Ideally, this will also handle
+        attendance and troop count stuff.
+
+        :param user: username of active bot
+        :return: dict of combatants and their side
+        """
         # scan battle history with sensors.retrieve_combatants and
         # receive a dict of users and their side
         self.lock.acquire()
@@ -97,13 +107,26 @@ class Mind(Process):
                                         side=combatant_dict[combatant])
             self.lock.release()
 
-            # update the
+        # TODO Keep track of user troop counts and battle counts too
+        return combatant_dict
 
-        # refresh bot's token
-        new_access_info = self.antenna.refresh_token_user()
-        memory.handle_player_memory(self.db,
-                                    user,
-                                    accessInfo=dumps(new_access_info))
+    def update_all_group(self, side):
+        """
+        Updates the 'all' group of the active side to reflect actual users. In
+        other words, this prevents members of the opposite team from receiving
+        messages meant for this team.
+
+        :param user: username of active bot
+        :param side: side of active bot
+        :return: None
+        """
+        self.lock.acquire()
+        allied_users = memory.get_players_with(self.db,
+                                               side=side,
+                                               recruited=True)
+        memory.update_list(side, 'all', allied_users)
+        self.lock.release()
+        return None
 
     def listen(self):
         """
@@ -113,8 +136,8 @@ class Mind(Process):
 
         :return: Nothing as of now
         """
-        user = 'Periwinkle_Prime_3'
-        side = 1
+        user = None
+        side = None
 
         # wait for signal to begin
         signal_received = self.nerves.poll(None)
@@ -122,7 +145,6 @@ class Mind(Process):
 
         # once it gets the signal to go
         while signal_received:
-            # TODO Keep track of user troop counts and battle counts too
             # TODO Aggregate lore from Chromalore and battles and store it
 
             #set antenna to correct side
@@ -134,7 +156,15 @@ class Mind(Process):
 
             self.get_recruits(user, side)
 
-            self.get_combatants(user, side)
+            self.get_combatants()
+
+            self.update_all_group(side)
+
+            # refresh bot's token
+            new_access_info = self.antenna.refresh_token_user()
+            memory.handle_player_memory(self.db,
+                                        user,
+                                        accessInfo=dumps(new_access_info))
 
             print("Done with {}'s cycle".format(user))
             time.sleep(30)

@@ -99,3 +99,15 @@ class LoreAttribError(AttribError):
         self.msg = "Invalid lore attribute for {}: {}".format(
             lore,
             self.attrib)
+
+class InvalidListError(ChromaError):
+    """
+    If the program tries to access a non-existent list.
+    """
+    def __init__(self, module, list_name, side):
+        self.module = module
+        self.list_name = list_name
+        self.side = side
+        self.msg = "Invalid list for side {}: {}".format(
+            self.side,
+            self.list_name)

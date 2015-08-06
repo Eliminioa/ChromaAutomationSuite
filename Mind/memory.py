@@ -68,7 +68,7 @@ def learn_new_player(db, username, **kwargs):
     if 'side' in attribs:
         side = kwargs['side']
     else:
-        side = '-2'
+        side = '1'
 
     if 'recruited' in attribs:
         recruited = kwargs['recruited']
@@ -221,7 +221,8 @@ def get_lists_of(side):
     elif side == 1:
         return PW_GROUPS
     else:
-        return {}
+        raise excs.InvalidSideError(__name__, side)
+
 
 @refresh_groups
 def add_player(side, list_name, player_name):
@@ -235,16 +236,19 @@ def add_player(side, list_name, player_name):
     """
     if side == 0:
         if list_name not in OR_GROUPS:
-            return False
+            raise excs.InvalidListError(__name__, list_name, side)
+        global OR_GROUPS
         OR_GROUPS[list_name].append(player_name)
     elif side == 1:
         if list_name not in PW_GROUPS:
-            return False
+            raise excs.InvalidListError(__name__, list_name, side)
         if player_name not in PW_GROUPS[list_name]:
+            global PW_GROUPS
             PW_GROUPS[list_name].append(player_name)
     else:
-        return False
+        raise excs.InvalidSideError(__name__, side)
     save_groups()
+
 
 @refresh_groups
 def remove_player(side, list_name, player_name):
@@ -258,17 +262,20 @@ def remove_player(side, list_name, player_name):
     """
     if side == 0:
         if list_name not in OR_GROUPS:
-            return False
+            raise excs.InvalidListError(__name__, list_name, side)
+        global OR_GROUPS
         OR_GROUPS[list_name].remove(player_name)
     elif side == 1:
         if list_name not in PW_GROUPS:
-            return False
+            raise excs.InvalidListError(__name__, list_name, side)
         if player_name in PW_GROUPS[list_name]:
+            global PW_GROUPS
             PW_GROUPS[list_name].remove(player_name)
     else:
-        return False
+        raise excs.InvalidSideError(__name__, side)
     save_groups()
     return True
+
 
 @refresh_groups
 def create_list(side, list_name):
@@ -281,16 +288,70 @@ def create_list(side, list_name):
     """
     if side == 0:
         if list_name in OR_GROUPS:
-            return False
+            raise excs.InvalidListError(__name__, list_name, side)
+        global OR_GROUPS
         OR_GROUPS[list_name] = []
     elif side == 1:
         if list_name in PW_GROUPS:
-            return False
+            raise excs.InvalidListError(__name__, list_name, side)
+        global PW_GROUPS
         PW_GROUPS[list_name] = []
     else:
-        return False
+        raise excs.InvalidSideError(__name__, side)
     save_groups()
     return True
+
+
+@refresh_groups
+def update_list(side, list_name, users):
+    """
+    Update an existing user list with a list of users. This means add users
+    who aren't in the existing list, remove users who aren't in the new list,
+    and make sure a user is only on the list once.
+
+    :param side: side of the target list
+    :param list_name: name of the target list
+    :param users: list of new users
+    :return: True
+    """
+    # get old list
+    if side == 0:
+        if list_name not in OR_GROUPS:
+            raise excs.InvalidListError(__name__, list_name, side)
+        old_list = OR_GROUPS[list_name]
+    elif side == 1:
+        if list_name not in PW_GROUPS:
+            raise excs.InvalidListError(__name__, list_name, side)
+        old_list = OR_GROUPS[list_name]
+    else:
+        raise excs.InvalidSideError(__name__, side)
+
+    # add new users
+    for user in users:
+        if user not in old_list:
+            old_list.append(user)
+
+    # eliminate ones to be removed
+    for user in old_list:
+        if user not in users:
+            while user in old_list:
+                old_list.remove(user)
+
+    # ensure each user appears only once
+    new_list = list(set(old_list))
+
+    #save new list
+    if side == 0:
+        global OR_GROUPS
+        OR_GROUPS[list_name] = new_list
+    elif side == 1:
+        global PW_GROUPS
+        PW_GROUPS[list_name] = new_list
+    else:
+        raise excs.InvalidSideError(__name__, side)
+    save_groups()
+
+
 
 # noinspection PyShadowingNames
 def save_groups():

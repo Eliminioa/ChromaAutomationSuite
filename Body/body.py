@@ -53,6 +53,10 @@ def home_page():
             listview=None,
             majors=None)
 
+    # if the session has an invalid side,
+    if not session.has_key('side') or session['side'] < 0:
+        session['side'] = 1
+
     # get the name of the list being managed, if any
     listname = request.args.get('listview')
     listname = (listname if listname is not None else 'all')
