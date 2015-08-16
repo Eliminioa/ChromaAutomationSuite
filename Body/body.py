@@ -4,6 +4,7 @@ import sqlite3
 
 from flask import Flask, g, render_template, request, redirect, session
 
+from Body import botIO
 from Mind import memory
 from Utilities.loggingSetup import create_logger
 
@@ -125,6 +126,7 @@ def sign_in():
     LOG.debug('Signing a user in')
     return redirect(ANTENNA.get_OAuth_URL('player'))
 
+
 @CAS.route('/sign-out', methods=['GET','POST'])
 def sign_out():
     LOG.info('{} is signing out'.format(session['username']))
@@ -180,6 +182,7 @@ def authorize_bot():
     LOG.info("Authorized {} bot for side {}".format(bot_name, bot_side))
     return redirect(ANTENNA.get_OAuth_URL('bot'))
 
+
 @CAS.route('/reset_bots')
 def reset_bots():
     """
@@ -193,8 +196,12 @@ def reset_bots():
         memory.remove_player_from_DB(g.db, bot)
     return redirect('/')
 
+
 @CAS.route('/run_bot')
 def run_bots():
+    """
+    Start the bots running
+    """
     # make sure no one else can do it
     if session['usertype'] != 2:
         return redirect('/')
@@ -202,6 +209,34 @@ def run_bots():
     LOG.debug("Sent signal to run bots")
     return redirect('/')
 
+
+@CAS.route('/change_side')
+def change_side():
+    """
+    Change the effective side of myself, so I can test both sides.
+    """
+    if session['usertype'] != 2:
+        return redirect('/')
+    session['side'] = abs(1-session['side'])
+    LOG.debug("Changed side to {}".format(session['side']))
+    return redirect('/')
+
+
+@CAS.route('/send_message', methods=['POST'])
+def send_message():
+    """
+    Send message from the side's bot.
+    """
+    subject = request.form['subject']
+    content = request.form['content']
+    list = request.form['list']
+    try:
+        recipients = memory.get_lists_of(session['side'])[list]
+    except:
+        recipients = memory.get_lists_of(session['side'])['all']
+    bot_name = 'Periwinkle_Prime_3' if session['side']==1 else 'Orangered_HQ'
+    botIO.send_message(ANTENNA, subject, content, recipients, bot_name)
+    return redirect('/')
 
 class Body(Process):
     """

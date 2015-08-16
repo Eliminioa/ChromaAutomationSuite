@@ -66,14 +66,8 @@ def retrieve_combatants(antenna):
     :param antenna: Antenna connection to Reddit
     :return: A dictionary of usernames and their side
     """
-    # retrieve bot comments
-    bot = antenna.get_redditor('chromabot')
-    # noinspection PyProtectedMember
-    bot_content = antenna.get_content(url=bot._url, limit=None)
-    comments = [item for item in bot_content if isinstance(item, praw.objects.Comment)]
-
-    # find skirmish comments
-    skirms = [thread for thread in comments if "Confirmed actions for this skirmish:" in thread.body]
+    # retrieve old battle threads
+    skirms = get_old_skirms(antenna)
 
     # regex pattern to extract name and side
     idPattern = re.compile(r"\w+\s+\(+\w+\)")
@@ -100,6 +94,30 @@ def retrieve_combatants(antenna):
     return combatant_dict
 
 
+def get_old_skirms(antenna):
+    """
+    Retrieve old battles and extract old skirmishes from them. Meant to be a
+    helper method for retrieve_combatants, but may have uses elsewhere.
+
+    :param antenna: Antenna to connect to Reddit
+    :return: a list of old skirmishes, in the form of Chrommabot's comments
+    """
+    # get old battles
+    battle_gen = antenna.search('[Invasion]', subreddit='FieldOfKarmicGlory')
+    battles = [b for b in battle_gen if str(b.author) == 'Chromabot']
+
+    #get skirmish comments
+    skirms = []
+    for battle in battles:
+        battle.replace_more_comments()
+        comments = praw.helpers.flatten_tree(battle.comments)
+        for cmnt in comments:
+            if hasattr(cmnt, 'author') and cmnt.author == 'Chromabot':
+                skirms.append(cmnt)
+
+    return skirms
+
+
 def reply_to_signup(sign_up, side, cfg):
     """
     As labeled, replies to a sign up with the appropriate message
@@ -119,3 +137,9 @@ def reply_to_signup(sign_up, side, cfg):
 
     # reply with a customized message
     sign_up.reply(message.format(str(sign_up.author)))
+
+
+def send_message(antenna, subject, content, recipients, bot_name):
+    antenna.set_user(bot_name)
+    for user in recipients:
+        antenna.send_message(recipient=user, subject=subject, message=content)
