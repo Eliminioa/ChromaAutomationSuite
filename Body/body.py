@@ -250,7 +250,7 @@ def set_thread():
     if session['usertype'] == 0:
         return redirect('/')
     thread_link = request.args.get('link')
-    thread_side = request.args.get('side')
+    thread_side = int(request.args.get('side'))
     thread_id = re.search("(?<=/)([1-z]{6})(?=/)", thread_link).group(0)
     if thread_side == 0:
         CONFIG["OR_RECRUIT_THREAD"] = thread_id
@@ -259,6 +259,7 @@ def set_thread():
     else:
         raise excs.InvalidSideError(__name__, thread_side)
     configReader.save(CONFIG)
+    return redirect('/')
 
 
 @CAS.route('/send_message', methods=['POST'])
