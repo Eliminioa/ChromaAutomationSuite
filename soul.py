@@ -52,8 +52,8 @@ class Soul(Process):
     def run(self):
         MIND = Mind('MIND', CONFIG, MIND_ANTENNA, SENSORY_NEURON, CONTROLLER)
         BODY = Body('BODY', CONFIG, BODY_ANTENNA, MOTOR_NEURON, CONTROLLER)
-        MIND.start()
         BODY.start()
+        MIND.start()
         while True:
             time.sleep(3600)
 

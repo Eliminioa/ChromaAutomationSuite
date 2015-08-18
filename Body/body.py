@@ -1,3 +1,4 @@
+import re
 from pickle import dumps
 from multiprocessing import Process
 import sqlite3
@@ -7,6 +8,8 @@ from flask import Flask, g, render_template, request, redirect, session
 from Body import botIO
 from Mind import memory
 from Utilities.loggingSetup import create_logger
+from Utilities import CASexcepts as excs
+from Utilities import configReader
 
 
 # Global vars
@@ -45,7 +48,12 @@ def commit_DB(response):
 def home_page():
     # tells the session the bot is online. Might actually make this useful
     # at some point.
-    session['status'] = 'ONLINE'
+    if NERVES.poll():
+        signal = NERVES.recv()
+        session['status'] = signal
+    elif 'status' not in session:
+        session['status'] = 'OFFLINE'
+
     if not session.has_key('logged_in') or not session['logged_in']:
         LOG.debug('Not logged in, displaying standard home page')
         return render_template('HomePage.html',
@@ -205,8 +213,20 @@ def run_bots():
     # make sure no one else can do it
     if session['usertype'] != 2:
         return redirect('/')
-    NERVES.send(1)
+    NERVES.send('THINK')
     LOG.debug("Sent signal to run bots")
+    return redirect('/')
+
+
+@CAS.route('/reset_groups')
+def reset_groups():
+    """
+    Clear both sides' groups to default."
+    """
+    if session['usertype'] != 2:
+        return redirect('/')
+    memory.clear_groups()
+    LOG.debug('Cleared groups')
     return redirect('/')
 
 
@@ -220,6 +240,25 @@ def change_side():
     session['side'] = abs(1-session['side'])
     LOG.debug("Changed side to {}".format(session['side']))
     return redirect('/')
+
+
+@CAS.route('/set_thread')
+def set_thread():
+    """
+    Set the recruitment thread of a side.
+    """
+    if session['usertype'] == 0:
+        return redirect('/')
+    thread_link = request.args.get('link')
+    thread_side = request.args.get('side')
+    thread_id = re.search("(?<=/)([1-z]{6})(?=/)", thread_link).group(0)
+    if thread_side == 0:
+        CONFIG["OR_RECRUIT_THREAD"] = thread_id
+    elif thread_side == 1:
+        CONFIG["PW_RECRUIT_THREAD"] = thread_id
+    else:
+        raise excs.InvalidSideError(__name__, thread_side)
+    configReader.save(CONFIG)
 
 
 @CAS.route('/send_message', methods=['POST'])

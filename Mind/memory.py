@@ -1,11 +1,13 @@
+"""Just some functions to help with database and group access/management."""
+
 import json
 import sqlite3
 
 from Utilities import CASexcepts as excs
+from Utilities.loggingSetup import create_logger
 
 HOME_DIRECTORY = '/home/jboggs/Documents/Coding/ChromaAutomationSuite'
-
-"""Just some functions to help with database and group access/management."""
+LOG = create_logger(__name__)
 
 # DATABASE FUNCTIONS
 
@@ -24,8 +26,10 @@ def handle_player_memory(db, username, **kwargs):
     player_names = db.execute('select username from players').fetchall()
     if username in [name[0] for name in player_names]:
         update_player_knowledge(db, username, **kwargs)
+        LOG.debug("Handled updating player {}".format(username))
     else:
         learn_new_player(db, username, **kwargs)
+        LOG.debug("Handled new player {}".format(username))
         return True
     return False
 
@@ -50,6 +54,7 @@ def update_player_knowledge(db, username, **kwargs):
                     (value, username))
             except KeyError:
                 raise excs.UserAttribError(__name__, attrib, username)
+            LOG.debug("Updated {} of {} to {}".format(attrib, username, value))
     db.commit()
     return len(kwargs), errors
 
@@ -85,9 +90,13 @@ def learn_new_player(db, username, **kwargs):
     else:
         accessInfo = ''
     #remember the player
-    db.execute('insert or replace into players (username, side, recruited, usertype, accessInfo)' +
-               'values (?, ?, ?, ?, ?)', (username, side, recruited, usertype, accessInfo))
+    db.execute('insert or replace into players ('
+               'username, side, recruited, usertype, accessInfo)' +
+               'values (?, ?, ?, ?, ?)', (username, side, recruited,
+                                          usertype, accessInfo))
     db.commit()
+    LOG.debug("Added {} to side {} with usertype {}".format(username,
+                                                            side, usertype))
     return True
 
 def get_players_with(db, **kwargs):
@@ -156,6 +165,7 @@ def get_players_with(db, **kwargs):
         query_result = query_result.intersection(by_recr)
     if by_type is not None:
         query_result = query_result.intersection(by_type)
+    LOG.debug('Results for search {}\n{}'.format(kwargs, query_result))
     return query_result
 
 def get_attrib_of_player(db, username, attrib):
@@ -185,6 +195,7 @@ def remove_player_from_DB(db, username):
     """
     try:
         db.execute('delete from players where username=?', [username])
+        LOG.debug("Removed {} from database".format(username))
     except KeyError:
         raise excs.InvalidUserError(__name__, username)
     except:
@@ -207,6 +218,21 @@ def refresh_groups(funct):
         return funct(*args, **kwargs)
     return new_funct
 
+def save_groups(funct):
+    def new_funct(*args, **kwargs):
+        tmp_OR_GROUPS, tmp_PW_GROUPS = funct(*args, **kwargs)
+        global OR_GROUPS
+        global PW_GROUPS
+        OR_GROUPS = tmp_OR_GROUPS
+        PW_GROUPS = tmp_PW_GROUPS
+        groups = {'OR_groups': OR_GROUPS,
+              'PW_groups': PW_GROUPS}
+        with open(HOME_DIRECTORY + '/Mind/groups.json', 'w') as gf:
+            json.dump(groups, gf)
+        return tmp_OR_GROUPS, tmp_PW_GROUPS
+    return new_funct
+
+
 
 @refresh_groups
 def get_lists_of(side):
@@ -225,6 +251,7 @@ def get_lists_of(side):
 
 
 @refresh_groups
+@save_groups
 def add_player(side, list_name, player_name):
     """
     As the label says, adds a player to a list.
@@ -232,25 +259,26 @@ def add_player(side, list_name, player_name):
     :param side: Which army's list to modify (OR=0,PW=1)
     :param list_name: The name of the list to add to
     :param player_name: Name of the player to add
-    :return: True if successful, false otherwise
+    :return: Updated OR_ and PW_GROUPS
     """
+    global PW_GROUPS
+    global OR_GROUPS
     if side == 0:
         if list_name not in OR_GROUPS:
             raise excs.InvalidListError(__name__, list_name, side)
-        global OR_GROUPS
         OR_GROUPS[list_name].append(player_name)
     elif side == 1:
         if list_name not in PW_GROUPS:
             raise excs.InvalidListError(__name__, list_name, side)
         if player_name not in PW_GROUPS[list_name]:
-            global PW_GROUPS
             PW_GROUPS[list_name].append(player_name)
     else:
         raise excs.InvalidSideError(__name__, side)
-    save_groups()
+    return OR_GROUPS, PW_GROUPS
 
 
 @refresh_groups
+@save_groups
 def remove_player(side, list_name, player_name):
     """
     As the label says, adds a player to a list.
@@ -258,51 +286,51 @@ def remove_player(side, list_name, player_name):
     :param side: Which army's list to modify (OR=0,PW=1)
     :param list_name: The name of the list to remove from to
     :param player_name: Name of the player to remove
-    :return: True if successful, false otherwise
+    :return: Updated OR_ and PW_GROUPS
     """
+    global PW_GROUPS
+    global OR_GROUPS
     if side == 0:
         if list_name not in OR_GROUPS:
             raise excs.InvalidListError(__name__, list_name, side)
-        global OR_GROUPS
         OR_GROUPS[list_name].remove(player_name)
     elif side == 1:
         if list_name not in PW_GROUPS:
             raise excs.InvalidListError(__name__, list_name, side)
         if player_name in PW_GROUPS[list_name]:
-            global PW_GROUPS
             PW_GROUPS[list_name].remove(player_name)
     else:
         raise excs.InvalidSideError(__name__, side)
-    save_groups()
-    return True
+    return OR_GROUPS, PW_GROUPS
 
 
 @refresh_groups
+@save_groups
 def create_list(side, list_name):
     """
     Creates a new list with the given name
 
     :param side: Which army to make the list for (OR=0, PW=1)
     :param list_name: Name of the new list
-    :return: True if successful, false otherwise
+    :return: Updated OR_ and PW_GROUPS
     """
+    global OR_GROUPS
+    global PW_GROUPS
     if side == 0:
         if list_name in OR_GROUPS:
             raise excs.InvalidListError(__name__, list_name, side)
-        global OR_GROUPS
         OR_GROUPS[list_name] = []
     elif side == 1:
         if list_name in PW_GROUPS:
             raise excs.InvalidListError(__name__, list_name, side)
-        global PW_GROUPS
         PW_GROUPS[list_name] = []
     else:
         raise excs.InvalidSideError(__name__, side)
-    save_groups()
-    return True
+    return OR_GROUPS, PW_GROUPS
 
 
 @refresh_groups
+@save_groups
 def update_list(side, list_name, users):
     """
     Update an existing user list with a list of users. This means add users
@@ -312,8 +340,10 @@ def update_list(side, list_name, users):
     :param side: side of the target list
     :param list_name: name of the target list
     :param users: list of new users
-    :return: True
+    :return: Updated OR_ and PW_GROUPS
     """
+    global PW_GROUPS
+    global OR_GROUPS
     # get old list
     if side == 0:
         if list_name not in OR_GROUPS:
@@ -322,7 +352,7 @@ def update_list(side, list_name, users):
     elif side == 1:
         if list_name not in PW_GROUPS:
             raise excs.InvalidListError(__name__, list_name, side)
-        old_list = OR_GROUPS[list_name]
+        old_list = PW_GROUPS[list_name]
     else:
         raise excs.InvalidSideError(__name__, side)
 
@@ -342,20 +372,20 @@ def update_list(side, list_name, users):
 
     #save new list
     if side == 0:
-        global OR_GROUPS
         OR_GROUPS[list_name] = new_list
     elif side == 1:
-        global PW_GROUPS
         PW_GROUPS[list_name] = new_list
     else:
         raise excs.InvalidSideError(__name__, side)
-    save_groups()
+    return OR_GROUPS, PW_GROUPS
 
-
-
-# noinspection PyShadowingNames
-def save_groups():
-    groups = {'OR_groups': OR_GROUPS,
-              'PW_groups': PW_GROUPS}
-    with open(HOME_DIRECTORY + '/Mind/groups.json', 'w') as gf:
-        json.dump(groups, gf)
+@save_groups
+def clear_groups():
+    """
+    As labeled, clear all the groups, essentially reseting the groups.
+    """
+    global OR_GROUPS
+    global PW_GROUPS
+    OR_GROUPS = {'all': []}
+    PW_GROUPS = {'all': []}
+    return OR_GROUPS, PW_GROUPS

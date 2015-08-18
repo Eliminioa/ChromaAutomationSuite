@@ -15,4 +15,4 @@ def read():
 
 def save(config_settings):
     with open(HOME_DIRECTORY + '/Body/global.cfg', 'w') as f:
-        json.dump(f, config_settings)
+        json.dump(config_settings, f)

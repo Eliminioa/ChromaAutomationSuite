@@ -1,14 +1,16 @@
+"""
+Module for letting the Chroma Automation Suite sense users both signing up
+to receive alerts from their generals and to sense which side players are on.
+"""
 import re
+import sys
 
 import praw.objects
 
 from Mind import memory
 from Utilities import CASexcepts as excs
 from Utilities.loggingSetup import create_logger
-"""
-Module for letting the Chroma Automation Suite sense users both signing up
-to receive alerts from their generals and to sense which side players are on.
-"""
+from Utilities import configReader
 LOG = create_logger(__name__)
 
 
@@ -52,22 +54,23 @@ def recruit_getter(cfg, db, antenna, side):
 
     # filter out already registered recruits
     new_recruits = [recr for recr in all_recruits if
-                    str(recr.author) not in majors]
+                    str(recr.author).lower() not in majors]
 
     return new_recruits
 
 
-def retrieve_combatants(antenna):
+def retrieve_combatants(antenna, cfg):
     """
     Look through old battles and skirmishes to retrieve users that have
     battled and their respective sides. Maybe later also keep track of
     troop counts and attendance?
 
     :param antenna: Antenna connection to Reddit
+    :param cfg: Config info
     :return: A dictionary of usernames and their side
     """
     # retrieve old battle threads
-    skirms = get_old_skirms(antenna)
+    skirms = get_old_skirms(antenna, cfg)
 
     # regex pattern to extract name and side
     idPattern = re.compile(r"\w+\s+\(+\w+\)")
@@ -94,17 +97,24 @@ def retrieve_combatants(antenna):
     return combatant_dict
 
 
-def get_old_skirms(antenna):
+def get_old_skirms(antenna, cfg):
     """
     Retrieve old battles and extract old skirmishes from them. Meant to be a
     helper method for retrieve_combatants, but may have uses elsewhere.
 
     :param antenna: Antenna to connect to Reddit
+    :param cfg: Config that holds viewed battle info
     :return: a list of old skirmishes, in the form of Chrommabot's comments
     """
+    viewed_battles = cfg['VIEWED_BATTLES']
     # get old battles
     battle_gen = antenna.search('[Invasion]', subreddit='FieldOfKarmicGlory')
-    battles = [b for b in battle_gen if str(b.author) == 'Chromabot']
+    raw_battles = [b for b in battle_gen if str(b.author) == 'chromabot']
+    #filter out battles we've already looked at
+    battles = [b for b in raw_battles if b.fullname not in viewed_battles]
+    for b in battles:
+        cfg['VIEWED_BATTLES'].append(b.fullname)
+    configReader.save(cfg)
 
     #get skirmish comments
     skirms = []
@@ -112,7 +122,7 @@ def get_old_skirms(antenna):
         battle.replace_more_comments()
         comments = praw.helpers.flatten_tree(battle.comments)
         for cmnt in comments:
-            if hasattr(cmnt, 'author') and cmnt.author == 'Chromabot':
+            if hasattr(cmnt, 'author') and str(cmnt.author) == 'chromabot':
                 skirms.append(cmnt)
 
     return skirms
@@ -141,5 +151,12 @@ def reply_to_signup(sign_up, side, cfg):
 
 def send_message(antenna, subject, content, recipients, bot_name):
     antenna.set_user(bot_name)
+    LOG.debug('Sending message {} from {}'.format(content, bot_name))
     for user in recipients:
-        antenna.send_message(recipient=user, subject=subject, message=content)
+        try:
+            antenna.send_message(recipient=user, subject=subject, message=content)
+            LOG.debug('  Message sent to {}'.format(user))
+        except:
+            e = sys.exc_info()
+            LOG.exception("Error in sending message to {}".format(user), e)
+            raise

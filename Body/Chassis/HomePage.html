@@ -79,7 +79,12 @@
                     <h4>Message Content:</h4>
                     <textarea name="content" placeholder="Write the body of the message here!" rows="15" cols="45"></textarea>
                     <h4>Recipients:</h4>
-                    <input type="text" name="list">
+                    <input list="list" name="list">
+                    <datalist id="list">
+                        {% for group in groups.keys() %}
+                        <option value="{{ group }}">{{ group }}</option>
+                        {% endfor %}
+                    </datalist>
                     <input type="submit" value="Send" class="btn">
                 </form>
             </div>
@@ -120,6 +125,7 @@
                 </div>
             </div>
             {% if session.usertype == 2 %}
+            <hr>
             <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4" style="padding-top: 15px; padding-bottom: 15px;">
                 <h3 align="center">ADMINISTRATION PANEL</h3>
                 <form name="auth_bot_form" action="/auth_bot" method="get">
@@ -130,10 +136,21 @@
                     <input type="radio" name="bot_side" value=0>Orangered
                     <input type="submit" value="Authorize">
                 </form>
+                <hr>
+                 <form name="set_signup_thread_form" action="/set_thread" method="get">
+                    <label for="link">Link to Sign Up Thread:</label>
+                    <input type="text" name="link" placeholder="https://www.reddit.com/r/PADRA/comments/3fnwdc/prime_test_post_v3">
+                    <label for="bot_side">Side of Thread:</label>
+                    <input type="radio" name="side" value=1 checked>Periwinkle
+                    <input type="radio" name="side" value=0>Orangered
+                    <input type="submit" value="Set Sign Up Thread">
+                </form>
+                <hr>
                 <select name="admin_action_select" onchange="window.location.href=this.value">
                     <option value="/" selected>Select an Option</option>
                     <option value="/reset_bots">Reset Bots</option>
                     <option value="/run_bot">Run Bots</option>
+                    <option value="/reset_groups">Reset Groups</option>
                     <option value="/change_side">Change Side</option>
                 </select>
             </div>

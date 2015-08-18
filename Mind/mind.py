@@ -33,14 +33,55 @@ class Mind(Process):
         print("MIND PID: {}".format(self.pid))
         while True:
             try:
-                self.log.debug("Began MIND process")
-                self.listen()
+                signal_received = self.nerves.recv()
+                if signal_received == 'THINK':
+                    self.log.debug("Began MIND process")
+                    self.nerves.send('ONLINE')
+                    self.listen()
             except:
                 exctype, value = sys.exc_info()[:2]
                 self.log.error("Error in thinking: {}: {}".format(
                     exctype,
                     value))
-                raise
+            finally:
+                self.nerves.send('OFFLINE')
+
+    def listen(self):
+        """
+        The actual workflow of monitoring sign ups and user involvement.
+        Right now that means getting recruits from the sign up thread
+        and figuring out which side people are on.
+
+        :return: Nothing as of now
+        """
+        user = None
+        side = None
+        self.log.info("Began thinking")
+
+        while True:
+            # TODO Aggregate lore from Chromalore and battles and store it
+
+            #set antenna to correct side
+            user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3'
+                    else 'Periwinkle_Prime_3')
+            side = (0 if side == 1 else 1)
+            self.antenna.set_user(user)
+            self.log.info("Set antenna to {}".format(user))
+
+            self.get_recruits(user, side)
+
+            self.get_combatants()
+
+            self.update_all_group(side)
+
+            # refresh bot's token
+            new_access_info = self.antenna.refresh_token_user()
+            memory.handle_player_memory(self.db,
+                                        user,
+                                        accessInfo=dumps(new_access_info))
+
+            print("Done with {}'s cycle".format(user))
+            time.sleep(30)
 
     def get_recruits(self, user, side):
         """
@@ -65,7 +106,7 @@ class Mind(Process):
         for recruit in new_recruits:
             self.lock.acquire()
             memory.handle_player_memory(self.db,
-                                        str(recruit.author),
+                                        str(recruit.author).lower(),
                                         side=side,
                                         recruited=True)
             self.lock.release()
@@ -96,7 +137,7 @@ class Mind(Process):
         # scan battle history with sensors.retrieve_combatants and
         # receive a dict of users and their side
         self.lock.acquire()
-        combatant_dict = botIO.retrieve_combatants(self.antenna)
+        combatant_dict = botIO.retrieve_combatants(self.antenna, self.cfg)
         self.lock.release()
 
         # handle combatants
@@ -127,44 +168,3 @@ class Mind(Process):
         memory.update_list(side, 'all', allied_users)
         self.lock.release()
         return None
-
-    def listen(self):
-        """
-        The actual workflow of monitoring sign ups and user involvement.
-        Right now that means getting recruits from the sign up thread
-        and figuring out which side people are on.
-
-        :return: Nothing as of now
-        """
-        user = None
-        side = None
-
-        # wait for signal to begin
-        signal_received = self.nerves.poll(None)
-        self.log.info("Began thinking")
-
-        # once it gets the signal to go
-        while signal_received:
-            # TODO Aggregate lore from Chromalore and battles and store it
-
-            #set antenna to correct side
-            user = ('Orangered_HQ' if user == 'Periwinkle_Prime_3'
-                  else 'Periwinkle_Prime_3')
-            side = (0 if side == 1 else 1)
-            self.antenna.set_user(user)
-            self.log.info("Set antenna to {}".format(user))
-
-            self.get_recruits(user, side)
-
-            self.get_combatants()
-
-            self.update_all_group(side)
-
-            # refresh bot's token
-            new_access_info = self.antenna.refresh_token_user()
-            memory.handle_player_memory(self.db,
-                                        user,
-                                        accessInfo=dumps(new_access_info))
-
-            print("Done with {}'s cycle".format(user))
-            time.sleep(30)
