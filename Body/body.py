@@ -1,3 +1,4 @@
+import os
 import re
 from pickle import dumps
 from multiprocessing import Process
@@ -14,7 +15,7 @@ from Utilities import configReader
 
 # Global vars
 CAS = Flask(__name__, template_folder='Chassis')
-CAS.config.from_pyfile('CASConfig.cfg')
+SECRET_KEY = os.environ.get('SECRETKEY')
 CAS.debug = True
 CONFIG = {}
 ANTENNA = None

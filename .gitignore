@@ -2,11 +2,11 @@
 
 ### BEGIN CUSTOM IGNORES
 /Defunct
-/static
-*.sql
-*.db
-*.json
-*.cfg
+#/static
+#*.sql
+#*.db
+#*.json
+#*.cfg
 *.pyc
 
 ### Below are all standard things gerenated by .gitignore plugin for PyCharm
