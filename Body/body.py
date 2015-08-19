@@ -16,7 +16,7 @@ from Utilities import configReader
 # Global vars
 CAS = Flask(__name__, template_folder='Chassis')
 SECRET_KEY = os.environ.get('SECRETKEY')
-CAS.debug = True
+CAS.debug = False
 CONFIG = {}
 ANTENNA = None
 NERVES = None
