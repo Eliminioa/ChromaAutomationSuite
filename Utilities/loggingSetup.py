@@ -5,7 +5,7 @@ __author__ = 'Eliminioa'
 __version__ = 'v 3.03'
 
 LOGGING_ON = True
-HOME_DIRECTORY = '/home/jboggs/Documents/Coding/ChromaAutomationSuite'
+HOME_DIRECTORY = '/app'
 
 def create_logger(name):
     # noinspection PyUnusedLocal

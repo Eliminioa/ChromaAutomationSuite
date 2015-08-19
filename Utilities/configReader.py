@@ -1,6 +1,6 @@
 import json
 
-HOME_DIRECTORY = '/home/jboggs/Documents/Coding/ChromaAutomationSuite'
+HOME_DIRECTORY = '/app'
 
 def read():
     """

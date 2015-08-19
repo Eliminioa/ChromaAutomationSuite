@@ -6,7 +6,7 @@ import sqlite3
 from Utilities import CASexcepts as excs
 from Utilities.loggingSetup import create_logger
 
-HOME_DIRECTORY = '/home/jboggs/Documents/Coding/ChromaAutomationSuite'
+HOME_DIRECTORY = '/app'
 LOG = create_logger(__name__)
 
 # DATABASE FUNCTIONS
