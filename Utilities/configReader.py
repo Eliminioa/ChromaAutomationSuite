@@ -11,7 +11,7 @@ def read():
 
     with open(HOME_DIRECTORY + '/Body/global.cfg', 'r') as f:
         config_settings = json.load(f)
-    config_settings['CLIENT_SECRET'] = os.environs.get('CLIENTSECRET')
+    config_settings['CLIENT_SECRET'] = os.environ.get('CLIENTSECRET')
     return config_settings
 
 
