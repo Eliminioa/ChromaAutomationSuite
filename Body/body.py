@@ -15,11 +15,9 @@ from Utilities import configReader, connector
 CAS = Flask(__name__, template_folder='Chassis')
 SECRET_KEY = os.environ.get('SECRETKEY')
 CAS.debug = False
-CONFIG = {}
-ANTENNA = None
-NERVES = None
+CONFIG = configReader.read()
+ANTENNA = connector.Connector(CONFIG)
 LOG = create_logger(__name__)
-LOCK = None
 
 
 @CAS.before_request
