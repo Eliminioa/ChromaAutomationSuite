@@ -1,8 +1,7 @@
 import os
 import re
+import time
 from pickle import dumps
-from multiprocessing import Process
-import sqlite3
 
 from flask import Flask, g, render_template, request, redirect, session
 
@@ -10,7 +9,7 @@ from Body import botIO
 from Mind import memory
 from Utilities.loggingSetup import create_logger
 from Utilities import CASexcepts as excs
-from Utilities import configReader
+from Utilities import connector, configReader
 
 
 # Global vars
